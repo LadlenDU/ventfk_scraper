@@ -9,7 +9,6 @@ class DataTo
 
     public function __construct()
     {
-        throw new Exception('test exception');
         $this->cookie = __DIR__ . '/storeland.cookie.txt';
     }
 
@@ -29,7 +28,14 @@ class DataTo
         curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
         curl_setopt($ch, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_1_1);
         curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:10.0.2) Gecko/20100101 Firefox/10.0.2');
+    }
 
+    protected function getCurlErrorInfo($ch)
+    {
+        $err = curl_errno($ch);
+        $errmsg = curl_error($ch);
+        $header = curl_getinfo($ch);
+        return "Errno: $err\nError: $errmsg\nInfo: $header";
     }
 
     protected function loadLoginPage()
@@ -42,9 +48,18 @@ class DataTo
 
         $result = curl_exec($ch);
 
+        if (!$result) {
+            $info = $this->getCurlErrorInfo($ch);
+            throw new Exception("Can't load login page. Info:\n$info\n");
+        }
+
         curl_close($ch);
 
         preg_match('/<input type="hidden" name="hash" value="(.+)"/', $result, $matches);
+
+        if (!$matches[1]) {
+            throw new Exception("Can't get hash from\n>>>>>\n$result\n<<<<<\n");
+        }
 
         return $matches[1];
     }
@@ -65,9 +80,10 @@ class DataTo
 
         $result = curl_exec($ch);
 
-        $err = curl_errno($ch);
-        $errmsg = curl_error($ch);
-        $header = curl_getinfo($ch);
+        if (!$result) {
+            $info = $this->getCurlErrorInfo($ch);
+            throw new Exception("Can't load ventfabrica login page. Info:\n$info\n");
+        }
 
         curl_close($ch);
     }
@@ -81,7 +97,6 @@ class DataTo
             'action_to' => 'http://storeland.ru/',
             'site_id' => '',
             'to' => '',
-            //'hash' => '66281d27',
             'hash' => $hash,
             'form[user_mail]' => 'twilighttower@mail.ru',
             'form[user_pass]' => 'FycUrYCa',
@@ -96,15 +111,23 @@ class DataTo
 
         $result = curl_exec($ch);
 
-        $err = curl_errno($ch);
-        $errmsg = curl_error($ch);
-        $header = curl_getinfo($ch);
+        if (!$result) {
+            $info = $this->getCurlErrorInfo($ch);
+            throw new Exception("Can't login to storeland. Info:\n$info\n");
+        }
 
         curl_close($ch);
 
         preg_match('/<input type=hidden name="sess_id" value="(.+)"/', $result, $matches);
+        if (!$matches[1]) {
+            throw new Exception("Can't get sess_id from\n>>>>>\n$result\n<<<<<\n");
+        }
         $sessId = $matches[1];
+
         preg_match('/<input type=hidden name="sess_hash" value="(.+)"/', $result, $matches);
+        if (!$matches[1]) {
+            throw new Exception("Can't get sess_hash from\n>>>>>\n$result\n<<<<<\n");
+        }
         $sessHash = $matches[1];
 
         $this->loadVentfabricaLoginPage($sessId, $sessHash);
@@ -137,22 +160,27 @@ class DataTo
 
         $result = curl_exec($ch);
 
-        $err = curl_errno($ch);
-        $errmsg = curl_error($ch);
-        $header = curl_getinfo($ch);
+        if (!$result) {
+            $info = $this->getCurlErrorInfo($ch);
+            throw new Exception("Can't upload image. Info:\n$info\n");
+        }
 
         curl_close($ch);
 
         $pageDecoded = json_decode($result);
 
+        if (!$pageDecoded['result'][$imageId]['image_id']) {
+            throw new Exception("Can't get image_id from\n>>>>>\n$result\n<<<<<\n");
+        }
+
         return $pageDecoded['result'][$imageId]['image_id'];
     }
 
-    public function init()
+    /*public function init()
     {
         $this->login();
         //$this->setImage();
-    }
+    }*/
 }
 
 try {
@@ -160,7 +188,7 @@ try {
     $to->login();
     $to->setImage();
 } catch (Exception $e) {
-    $msg = date(DATE_RFC822) . ">\nLine: " . $e->getLine() . "\nMessage:\n" . $e->getMessage() . "\n\n";
+    $msg = date(DATE_RFC822) . " >\nLine: " . $e->getLine() . "\nMessage:\n" . $e->getMessage() . "\n\n";
     error_log($msg, 3, 'error.log');
     mail('TwilightTower@mail.ru', 'Ошибка в парсере', $msg);
 }
