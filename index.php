@@ -5,77 +5,165 @@ ini_set('display_errors', 1);
 
 class DataTo
 {
-    const COOKIE = 'storeland.cookie.txt';
+    private $cookie;
 
-    /*public function __construct()
+    public function __construct()
+    {
+        throw new Exception('test exception');
+        $this->cookie = __DIR__ . '/storeland.cookie.txt';
+    }
+
+    protected function setCommonCurlOpt($ch)
+    {
+        curl_setopt($ch, CURLOPT_VERBOSE, true);
+        curl_setopt($ch, CURLOPT_AUTOREFERER, true);
+        curl_setopt($ch, CURLOPT_MAXREDIRS, 10);
+        curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+        curl_setopt($ch, CURLOPT_ENCODING, '');
+        curl_setopt($ch, CURLOPT_COOKIEFILE, $this->cookie);
+        curl_setopt($ch, CURLOPT_COOKIEJAR, $this->cookie);
+        curl_setopt($ch, CURLOPT_COOKIESESSION, true);
+        //curl_setopt($ch, CURLOPT_HEADER, true);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        //curl_setopt($ch, CURLINFO_HEADER_OUT, true);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+        curl_setopt($ch, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_1_1);
+        curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:10.0.2) Gecko/20100101 Firefox/10.0.2');
+
+    }
+
+    protected function loadLoginPage()
     {
         $ch = curl_init();
-    }*/
 
-    protected function login()
+        $this->setCommonCurlOpt($ch);
+        curl_setopt($ch, CURLOPT_POST, false);
+        curl_setopt($ch, CURLOPT_URL, "https://storeland.ru/user/login");
+
+        $result = curl_exec($ch);
+
+        curl_close($ch);
+
+        preg_match('/<input type="hidden" name="hash" value="(.+)"/', $result, $matches);
+
+        return $matches[1];
+    }
+
+    protected function loadVentfabricaLoginPage($sessId, $sessHash)
     {
+        $ch = curl_init();
+
+        $data = [
+            'sess_id' => $sessId,
+            'sess_hash' => $sessHash,
+        ];
+
+        $this->setCommonCurlOpt($ch);
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
+        curl_setopt($ch, CURLOPT_URL, "http://ventfabrika.su/admin/login");
+
+        $result = curl_exec($ch);
+
+        $err = curl_errno($ch);
+        $errmsg = curl_error($ch);
+        $header = curl_getinfo($ch);
+
+        curl_close($ch);
+    }
+
+    public function login()
+    {
+        $hash = $this->loadLoginPage();
+
         $data = [
             'act' => 'login',
             'action_to' => 'http://storeland.ru/',
             'site_id' => '',
             'to' => '',
-            'hash' => '66281d27',
+            //'hash' => '66281d27',
+            'hash' => $hash,
             'form[user_mail]' => 'twilighttower@mail.ru',
             'form[user_pass]' => 'FycUrYCa',
         ];
 
         $ch = curl_init();
 
-        curl_setopt($ch, CURLOPT_VERBOSE, 1);
+        $this->setCommonCurlOpt($ch);
         curl_setopt($ch, CURLOPT_POST, true);
-        curl_setopt($ch, CURLOPT_COOKIE, self::COOKIE);
-        curl_setopt($ch, CURLOPT_HEADER, 0);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        //curl_setopt($ch, CURL_HTTPHEADER , "Content-Type: multipart/form-data" );
         curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
         curl_setopt($ch, CURLOPT_URL, "https://storeland.ru/user/login");
 
         $result = curl_exec($ch);
 
+        $err = curl_errno($ch);
+        $errmsg = curl_error($ch);
+        $header = curl_getinfo($ch);
+
         curl_close($ch);
+
+        preg_match('/<input type=hidden name="sess_id" value="(.+)"/', $result, $matches);
+        $sessId = $matches[1];
+        preg_match('/<input type=hidden name="sess_hash" value="(.+)"/', $result, $matches);
+        $sessHash = $matches[1];
+
+        $this->loadVentfabricaLoginPage($sessId, $sessHash);
     }
 
-    protected function setImage()
+    protected function genImageId()
     {
+        $num = mt_rand(10, 999999999999);
+        return 'img_' . str_pad($num, 12, '0', STR_PAD_LEFT);
+    }
+
+    public function setImage()
+    {
+        $imageId = $this->genImageId();
+
         $img = __DIR__ . '/Sobranie_cover4.jpg';
         $data = ['form[ajax_images][]' => '@' . $img,
             'ajax_q' => 1,
             'form[goods_id]' => 'NaN',
             //'form[images_ids][0]' => 'img_699860198617'
-            'form[images_ids][0]' => 'img_699860198618'
+            'form[images_ids][0]' => $imageId,
         ];
 
         $ch = curl_init();
 
-        curl_setopt($ch, CURLOPT_VERBOSE, 1);
+        $this->setCommonCurlOpt($ch);
         curl_setopt($ch, CURLOPT_POST, true);
-        curl_setopt($ch, CURLOPT_COOKIE, self::COOKIE);
-        curl_setopt($ch, CURLOPT_HEADER, 0);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        //curl_setopt($ch, CURL_HTTPHEADER , "Content-Type: multipart/form-data" );
         curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
-        curl_setopt($ch, CURLOPT_REFERER, "http://internalweb.com/");
         curl_setopt($ch, CURLOPT_URL, "http://ventfabrika.su/admin/store_goods_img_upload");
 
-        $page = curl_exec($ch);
+        $result = curl_exec($ch);
+
+        $err = curl_errno($ch);
+        $errmsg = curl_error($ch);
+        $header = curl_getinfo($ch);
 
         curl_close($ch);
+
+        $pageDecoded = json_decode($result);
+
+        return $pageDecoded['result'][$imageId]['image_id'];
     }
 
     public function init()
     {
         $this->login();
-        $this->setImage();
+        //$this->setImage();
     }
 }
 
-$to = new DataTo();
-$to->init();
+try {
+    $to = new DataTo();
+    $to->login();
+    $to->setImage();
+} catch (Exception $e) {
+    $msg = date(DATE_RFC822) . ">\nLine: " . $e->getLine() . "\nMessage:\n" . $e->getMessage() . "\n\n";
+    error_log($msg, 3, 'error.log');
+    mail('TwilightTower@mail.ru', 'Ошибка в парсере', $msg);
+}
 
 exit;
 
