@@ -16,7 +16,6 @@ function array_map_recursive($callback, $array)
 }
 
 
-
 /*try {
     $to = new DataReader();
     $to->login();
@@ -109,9 +108,27 @@ foreach ($items as $itm) {
 
 
     $products[] = array_map_recursive('trim', $prod);
+    break;
 }
 
 header('Content-Type: text/html; charset=utf-8');
 echo '<pre>';
 print_r($products);
 echo '</pre>';
+
+try {
+    $qc = new QueryCreator('cid_4951221');
+    $qc->setImage($urlRoot . $products[0]['img_src']);
+    $qc->setName($products[0]['name']);
+    $qc->setShortDescription($products[0]['short_description']);
+    $qc->setFullDescription($products[0]['full_description']);
+
+    $qc->postNewItem();
+
+} catch (Exception $e) {
+    $msg = date(DATE_RFC822) . " >\nLine: " . $e->getLine() . "\nMessage:\n" . $e->getMessage() . "\n\n";
+    error_log($msg, 3, 'error.log');
+    mail('TwilightTower@mail.ru', 'Ошибка в парсере', $msg);
+    exit;
+}
+

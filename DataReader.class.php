@@ -264,4 +264,22 @@ class DataReader
 
         return $matches[1];
     }
+
+    public function postNewItem($params) {
+        $ch = curl_init();
+
+        $this->setCommonCurlOpt($ch);
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, $params);
+        curl_setopt($ch, CURLOPT_URL, "http://ventfabrika.su/admin/store_goods_add/");
+
+        $result = curl_exec($ch);
+
+        if (!$result) {
+            $info = $this->getCurlErrorInfo($ch);
+            throw new Exception("Can't post new item. Info:\n$info\n");
+        }
+
+        curl_close($ch);
+    }
 }
