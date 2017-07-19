@@ -186,13 +186,22 @@ class DataReader
         return $pageDecoded['result'][$imageId]['image_id'];
     }
 
+    public static function genRndKey($length = 8)
+    {
+        $num = '';
+        for ($i = 0; $i < $length; ++$i) {
+            $num .= mt_rand(0, 9);
+        }
+        return $num;
+    }
+
     public function getCharacteristics()
     {
         $ch = curl_init();
 
         $this->setCommonCurlOpt($ch);
         curl_setopt($ch, CURLOPT_POST, false);
-        curl_setopt($ch, CURLOPT_URL, "http://ventfabrika.su/json/attr");
+        curl_setopt($ch, CURLOPT_URL, "http://ventfabrika.su/json/attr?" . self::genRndKey());
 
         $result = curl_exec($ch);
 
@@ -218,8 +227,11 @@ class DataReader
      */
     public static function normalizeString($str)
     {
-        $strMod = mb_strtolower(trim($str, ": \t\n\r\0\x0B"), 'utf-8');
-        $strMod = preg_replace('/\s+/', ' ', $strMod);
+        //$strMod = mb_strtolower(trim($str, ": \t\n\r\0\x0B"), 'utf-8');
+        $strMod = trim($str, ": \t\n\r\0\x0B");
+        $strMod = preg_replace('/\s+/u', ' ', $strMod);
+        $strMod = preg_replace('/^\s*/u', '', $strMod);
+        $strMod = preg_replace('/\s*$/u', '', $strMod);
         return $strMod;
     }
 
@@ -265,7 +277,8 @@ class DataReader
         return $matches[1];
     }
 
-    public function postNewItem($params) {
+    public function postNewItem($params)
+    {
         $ch = curl_init();
 
         $this->setCommonCurlOpt($ch);
@@ -281,5 +294,42 @@ class DataReader
         }
 
         curl_close($ch);
+    }
+
+    public function ifItemExists($name)
+    {
+        $ch = curl_init();
+
+        $params = [
+            'method' => 'cat-data',
+            'request_type' => 'store_catalog',
+            'only_data' => 1,
+            'per_page' => 1,
+            'page' => 0,
+            'search_q' => $name,
+            'id' => 'all_goods',
+            'version' => 'ddd187',
+            'ajax_q' => 1,
+        ];
+
+        $this->setCommonCurlOpt($ch);
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, $params);
+        curl_setopt($ch, CURLOPT_URL, 'http://ventfabrika.su/admin/store_catalog');
+
+        $result = curl_exec($ch);
+
+        if (!$result) {
+            $info = $this->getCurlErrorInfo($ch);
+            throw new Exception("Can't find item. Info:\n$info\n");
+        }
+
+        curl_close($ch);
+
+        if (strpos($result, 'Не найдено ни одного товара') !== false) {
+            return false;
+        }
+
+        return true;
     }
 }

@@ -71,6 +71,7 @@ class QueryCreator
     public function setName($name)
     {
         $this->params["form[goods_name]"] = $name;
+        $this->params["form[goods_title]"] = $name;
     }
 
     public function setShortDescription($descr)
@@ -86,13 +87,49 @@ class QueryCreator
         $this->params["form[goods_seo_desc_large]"] = $descr;
     }
 
-    public function setFeature($name, $value)
+    public function setFeature($fName, $fValue)
     {
+        $nc = $this->to->getNormCharacteristics();
+        $hexKey = $this->genHexKey();
 
+        $nameFound = false;
+        foreach ($nc as $char) {
+            if (mb_strtolower($char['name'], 'utf-8') == mb_strtolower($fName, 'utf-8')) {
+                $this->params["form[attr][$hexKey][name]"] = $char['id'];
+                $this->params["form[attr][$hexKey][new_name]"] = '';
+
+                $valFound = false;
+                foreach ($char['values'] as $val) {
+                    if (mb_strtolower($val['val'], 'utf-8') == mb_strtolower($fValue, 'utf-8')) {
+                        $this->params["form[attr][$hexKey][new_value]"] = '';
+                        $this->params["form[attr][$hexKey][value]"] = $val['id'];
+                        $valFound = true;
+                        break;
+                    }
+                }
+                if (!$valFound) {
+                    $this->params["form[attr][$hexKey][new_value]"] = $fValue;
+                    $this->params["form[attr][$hexKey][value]"] = 0;
+                }
+
+                $nameFound = true;
+                break;
+            }
+        }
+        if (!$nameFound) {
+            $this->params["form[attr][$hexKey][name]"] = 0;
+            $this->params["form[attr][$hexKey][new_name]"] = $fName;
+            $this->params["form[attr][$hexKey][new_value]"] = $fValue;
+            $this->params["form[attr][$hexKey][value]"] = 0;
+        }
     }
 
     public function postNewItem()
     {
+        if ($this->to->ifItemExists($this->params['form[goods_name]'])) {
+            return 'already_exists';
+        }
         $this->to->postNewItem($this->params);
+        return 'item_set';
     }
 }

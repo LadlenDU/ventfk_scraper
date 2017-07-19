@@ -15,20 +15,6 @@ function array_map_recursive($callback, $array)
     return array_map($func, $array);
 }
 
-
-/*try {
-    $to = new DataReader();
-    $to->login();
-    $to->getNormCharacteristics();
-    //$to->setImage('http://www.waltercreech.com/images/artwork/pelican.jpg');
-} catch (Exception $e) {
-    $msg = date(DATE_RFC822) . " >\nLine: " . $e->getLine() . "\nMessage:\n" . $e->getMessage() . "\n\n";
-    error_log($msg, 3, 'error.log');
-    mail('TwilightTower@mail.ru', 'Ошибка в парсере', $msg);
-}
-
-exit;*/
-
 $urlRoot = 'https://iclim.ru';
 $url = $urlRoot . '/catalog/ventilyatsiya/ventilyatsionnye_ustanovki/pritochno_vytyazhnye_ustanovki/tag/ostberg/?filter=arCatalogFilter_20_195255756:Y&sort=shows';
 
@@ -75,8 +61,6 @@ foreach ($items as $itm) {
     $loadFeature = $domFeature->loadHTML('<?xml encoding="utf-8" ?>' . $prod['full_feature']);
     $xpathFeature = new DOMXPath($domFeature);
 
-    //$this->to->getNormCharacteristics;
-
     $prod['features'] = [];
 
     $trs = $xpathFeature->query("//div[@class='item_info_section']/table/tr");
@@ -90,7 +74,7 @@ foreach ($items as $itm) {
                 $textContent = DataReader::normalizeString($node->textContent);
                 if ($counter == 0) {
                     ++$counter;
-                    if ($textContent == 'бренд') {
+                    if (mb_strtolower($textContent, 'utf-8') == 'бренд') {
                         break;
                     }
                     $feature['name'] = $textContent;
@@ -112,23 +96,42 @@ foreach ($items as $itm) {
 }
 
 header('Content-Type: text/html; charset=utf-8');
-echo '<pre>';
-print_r($products);
-echo '</pre>';
 
 try {
+
+    $oldItems = [];
+    $newItems = [];
+
     $qc = new QueryCreator('cid_4951221');
     $qc->setImage($urlRoot . $products[0]['img_src']);
     $qc->setName($products[0]['name']);
     $qc->setShortDescription($products[0]['short_description']);
     $qc->setFullDescription($products[0]['full_description']);
 
-    $qc->postNewItem();
+    foreach ($products[0]['features'] as $feature) {
+        $qc->setFeature($feature['name'], $feature['value']);
+    }
+
+    $res = $qc->postNewItem();
+    if ($res == 'already_exists') {
+        $oldItems[] = $products[0]['name'];
+    } elseif ($res == 'item_set') {
+        $newItems[] = $products[0]['name'];
+    } else {
+        throw new Exception('internal error');
+    }
 
 } catch (Exception $e) {
     $msg = date(DATE_RFC822) . " >\nLine: " . $e->getLine() . "\nMessage:\n" . $e->getMessage() . "\n\n";
     error_log($msg, 3, 'error.log');
     mail('TwilightTower@mail.ru', 'Ошибка в парсере', $msg);
+    echo '<pre>';
+    echo 'Произошла ошибка:<br>';
+    echo $msg;
+    echo '</pre>';
     exit;
 }
 
+echo '<pre>';
+print_r($products);
+echo '</pre>';
