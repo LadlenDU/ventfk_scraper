@@ -226,23 +226,52 @@ class DataTo
         return $strMod;
     }
 
-    public function getCharactNames()
+    public function getNormCharacteristics()
     {
-        $namesLC = [];  // lowercase names
+        $chars = [];  // lowercase names
 
         $characts = $this->getCharacteristics();
         foreach ($characts as $elem) {
-            $namesLC[] = self::normalizeString($elem);
+            $elem['name'] = self::normalizeString($elem['name']);
+            $elem['values']['val'] = self::normalizeString($elem['values']['val']);
+            $chars[] = $elem;
         }
 
-        return $namesLC;
+        return $chars;
+    }
+
+    public function newItemPage()
+    {
+        $ch = curl_init();
+
+        $this->setCommonCurlOpt($ch);
+        curl_setopt($ch, CURLOPT_POST, false);
+        curl_setopt($ch, CURLOPT_URL, "http://ventfabrika.su/admin/store_goods_add");
+
+        $result = curl_exec($ch);
+
+        if (!$result) {
+            $info = $this->getCurlErrorInfo($ch);
+            throw new Exception("Can't get new item page. Info:\n$info\n");
+        }
+
+        curl_close($ch);
+
+        preg_match('/<input type="hidden" name="hash" value="(.+)"/', $result, $matches);
+
+        if (!$matches[1]) {
+            throw new Exception("Can't get hash from\n>>>>>\n$result\n<<<<<\n");
+        }
+
+        return $matches[1];
     }
 }
 
 try {
     $to = new DataTo();
     $to->login();
-    $to->setImage('http://www.waltercreech.com/images/artwork/pelican.jpg');
+    $to->getNormCharacteristics();
+    //$to->setImage('http://www.waltercreech.com/images/artwork/pelican.jpg');
 } catch (Exception $e) {
     $msg = date(DATE_RFC822) . " >\nLine: " . $e->getLine() . "\nMessage:\n" . $e->getMessage() . "\n\n";
     error_log($msg, 3, 'error.log');
