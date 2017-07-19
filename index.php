@@ -62,5 +62,7 @@ foreach ($items as $itm) {
     $products[] = array_map('trim', $prod);
 }
 
+header('Content-Type: text/html; charset=utf-8');
+echo '<pre>';
 print_r($products);
-
+echo '</pre>';
