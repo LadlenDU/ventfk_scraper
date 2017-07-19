@@ -144,12 +144,16 @@ class DataTo
         return 'img_' . $num;
     }
 
-    public function setImage()
+    public function setImage($url)
     {
         $imageId = $this->genImageId();
 
+        $image = file_get_contents($url);
+        $tmpName = tempnam(sys_get_temp_dir(), 'tmp');
+        file_put_contents($tmpName, $image);
+
         $img = __DIR__ . '/Sobranie_cover4.jpg';
-        //$img = 'http://www.waltercreech.com/images/artwork/pelican.jpg';
+        //$img = ;
         $cImage = new CURLFile($img);
         $data = ['form[ajax_images][]' => $cImage,
             'ajax_q' => 1,
@@ -167,6 +171,8 @@ class DataTo
 
         $result = curl_exec($ch);
 
+        unset($tmpName);
+
         if (!$result) {
             $info = $this->getCurlErrorInfo($ch);
             throw new Exception("Can't upload image. Info:\n$info\n");
@@ -182,18 +188,12 @@ class DataTo
 
         return $pageDecoded['result'][$imageId]['image_id'];
     }
-
-    /*public function init()
-    {
-        $this->login();
-        //$this->setImage();
-    }*/
 }
 
 try {
     $to = new DataTo();
     $to->login();
-    $to->setImage();
+    $to->setImage('http://www.waltercreech.com/images/artwork/pelican.jpg');
 } catch (Exception $e) {
     $msg = date(DATE_RFC822) . " >\nLine: " . $e->getLine() . "\nMessage:\n" . $e->getMessage() . "\n\n";
     error_log($msg, 3, 'error.log');
