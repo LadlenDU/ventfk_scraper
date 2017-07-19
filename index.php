@@ -6,6 +6,17 @@ ini_set('display_errors', 1);
 require_once('DataReader.class.php');
 require_once('QueryCreator.class.php');
 
+function array_map_recursive($callback, $array)
+{
+    $func = function ($item) use (&$func, &$callback) {
+        return is_array($item) ? array_map($func, $item) : call_user_func($callback, $item);
+    };
+
+    return array_map($func, $array);
+}
+
+
+
 /*try {
     $to = new DataReader();
     $to->login();
@@ -59,7 +70,45 @@ foreach ($items as $itm) {
     $prod['full_description'] = $descrFullElem->ownerDocument->saveHTML($descrFullElem);
     $prod['full_feature'] = $featureFullElem->ownerDocument->saveHTML($featureFullElem);
 
-    $products[] = array_map('trim', $prod);
+    // Характеристики
+    $domFeature = new DOMDocument;
+    $domFeature->preserveWhiteSpace = false;
+    $loadFeature = $domFeature->loadHTML('<?xml encoding="utf-8" ?>' . $prod['full_feature']);
+    $xpathFeature = new DOMXPath($domFeature);
+
+    //$this->to->getNormCharacteristics;
+
+    $prod['features'] = [];
+
+    $trs = $xpathFeature->query("//div[@class='item_info_section']/table/tr");
+    foreach ($trs as $tr) {
+
+        $feature = [];
+
+        $counter = 0;
+        foreach ($tr->childNodes as $node) {
+            if ($node->nodeName == 'td') {
+                $textContent = DataReader::normalizeString($node->textContent);
+                if ($counter == 0) {
+                    ++$counter;
+                    if ($textContent == 'бренд') {
+                        break;
+                    }
+                    $feature['name'] = $textContent;
+                } else {
+                    $feature['value'] = $textContent;
+                    break;
+                }
+            }
+        }
+
+        if ($feature) {
+            $prod['features'][] = $feature;
+        }
+    }
+
+
+    $products[] = array_map_recursive('trim', $prod);
 }
 
 header('Content-Type: text/html; charset=utf-8');
