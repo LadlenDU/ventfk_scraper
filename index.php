@@ -188,6 +188,55 @@ class DataTo
 
         return $pageDecoded['result'][$imageId]['image_id'];
     }
+
+    public function getCharacteristics()
+    {
+        $ch = curl_init();
+
+        $this->setCommonCurlOpt($ch);
+        curl_setopt($ch, CURLOPT_POST, false);
+        curl_setopt($ch, CURLOPT_URL, "http://ventfabrika.su/json/attr");
+
+        $result = curl_exec($ch);
+
+        if (!$result) {
+            $info = $this->getCurlErrorInfo($ch);
+            throw new Exception("Can't get add goods page. Info:\n$info\n");
+        }
+
+        curl_close($ch);
+
+        $result = substr($result, 0, 21);
+
+        $dRes = json_decode($result);
+        if ($dRes) {
+            throw new Exception("Can't get characteristics from\n>>>>>\n$result\n<<<<<\n");
+        }
+
+        return $dRes;
+    }
+
+    /**
+     * Удаляет лишнее из строки.
+     */
+    public static function normalizeString($str)
+    {
+        $strMod = mb_strtolower(trim($str, ": \t\n\r\0\x0B"), 'utf-8');
+        $strMod = preg_replace('\s+', ' ', $strMod);
+        return $strMod;
+    }
+
+    public function getCharactNames()
+    {
+        $namesLC = [];  // lowercase names
+
+        $characts = $this->getCharacteristics();
+        foreach ($characts as $elem) {
+            $namesLC[] = self::normalizeString($elem);
+        }
+
+        return $namesLC;
+    }
 }
 
 try {
