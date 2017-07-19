@@ -90,6 +90,8 @@ class DataTo
 
     public function login()
     {
+        unlink($this->cookie);  // не оптимально но так проще
+
         $hash = $this->loadLoginPage();
 
         $data = [
@@ -135,8 +137,11 @@ class DataTo
 
     protected function genImageId()
     {
-        $num = mt_rand(10, 999999999999);
-        return 'img_' . str_pad($num, 12, '0', STR_PAD_LEFT);
+        $num = '';
+        for ($i = 0; $i < 12; ++$i) {
+            $num .= mt_rand(0, 9);
+        }
+        return 'img_' . $num;
     }
 
     public function setImage()
@@ -144,7 +149,9 @@ class DataTo
         $imageId = $this->genImageId();
 
         $img = __DIR__ . '/Sobranie_cover4.jpg';
-        $data = ['form[ajax_images][]' => '@' . $img,
+        //$img = 'http://www.waltercreech.com/images/artwork/pelican.jpg';
+        $cImage = new CURLFile($img);
+        $data = ['form[ajax_images][]' => $cImage,
             'ajax_q' => 1,
             'form[goods_id]' => 'NaN',
             //'form[images_ids][0]' => 'img_699860198617'
@@ -167,7 +174,7 @@ class DataTo
 
         curl_close($ch);
 
-        $pageDecoded = json_decode($result);
+        $pageDecoded = json_decode($result, true);
 
         if (!$pageDecoded['result'][$imageId]['image_id']) {
             throw new Exception("Can't get image_id from\n>>>>>\n$result\n<<<<<\n");
