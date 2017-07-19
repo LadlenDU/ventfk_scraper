@@ -152,9 +152,9 @@ class DataTo
         $tmpName = tempnam(sys_get_temp_dir(), 'tmp');
         file_put_contents($tmpName, $image);
 
-        $img = __DIR__ . '/Sobranie_cover4.jpg';
-        //$img = ;
-        $cImage = new CURLFile($img);
+        $fName = pathinfo($url, PATHINFO_BASENAME);
+
+        $cImage = new CURLFile($tmpName, mime_content_type($tmpName), $fName);
         $data = ['form[ajax_images][]' => $cImage,
             'ajax_q' => 1,
             'form[goods_id]' => 'NaN',
