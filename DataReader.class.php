@@ -97,8 +97,8 @@ class DataReader
             'site_id' => '',
             'to' => '',
             'hash' => $hash,
-            'form[user_mail]' => 'twilighttower@mail.ru',
-            'form[user_pass]' => 'FycUrYCa',
+            'form[user_mail]' => STORELAND_LOGIN,
+            'form[user_pass]' => STORELAND_PASSWORD,
         ];
 
         $ch = curl_init();
