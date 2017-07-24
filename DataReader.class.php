@@ -365,4 +365,31 @@ class DataReader
 
         return true;
     }
+
+    public function getCatalog()
+    {
+        $ch = curl_init();
+
+        $this->setCommonCurlOpt($ch);
+        curl_setopt($ch, CURLOPT_POST, false);
+        curl_setopt($ch, CURLOPT_URL, "http://ventfabrika.su/admin/store#,all_goods");
+
+        $result = curl_exec($ch);
+
+        if (!$result) {
+            $info = $this->getCurlErrorInfo($ch);
+            throw new Exception("Can't get catalog. Info:\n$info\n");
+        }
+
+        $dom = new DOMDocument;
+        $dom->preserveWhiteSpace = false;
+        $dom->loadHTML($result);
+        $xpath = new DOMXPath($dom);
+
+        $catalogHtmlLink = $xpath->query("//li[@id='root']")->item(0);
+        $catalogHtml = $dom->loadHTML($catalogHtmlLink);
+        $xpath = new DOMXPath($dom);
+
+        curl_close($ch);
+    }
 }
