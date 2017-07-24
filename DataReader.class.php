@@ -130,6 +130,30 @@ class DataReader
         $sessHash = $matches[1];
 
         $this->loadVentfabricaLoginPage($sessId, $sessHash);
+        $this->findSearchVersion();
+    }
+
+    protected function findSearchVersion() {
+        $ch = curl_init();
+
+        $this->setCommonCurlOpt($ch);
+        curl_setopt($ch, CURLOPT_POST, false);
+        curl_setopt($ch, CURLOPT_URL, "http://ventfabrika.su/admin/store#,all_goods");
+
+        $result = curl_exec($ch);
+
+        if (!$result) {
+            $info = $this->getCurlErrorInfo($ch);
+            throw new Exception("Can't load search goods page. Info:\n$info\n");
+        }
+
+        curl_close($ch);
+
+        preg_match("/,version: '(.+)'/", $result, $matches);
+        $this->searchVersion = $matches[1];
+        if (!$this->searchVersion) {
+            throw new Exception("Can't find search version. Page:\n$result\n");
+        }
     }
 
     protected function genImageId()
@@ -308,7 +332,8 @@ class DataReader
             'page' => 0,
             'search_q' => $name,
             'id' => 'all_goods',
-            'version' => 'ddd187',
+            //'version' => 'ddd187',
+            'version' => $this->searchVersion,
             'ajax_q' => 1,
         ];
 
