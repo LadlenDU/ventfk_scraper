@@ -77,14 +77,14 @@ class QueryCreator
     public function setShortDescription($descr)
     {
         $this->params["form[goods_desc_short]"] = $descr;
-        $this->params["form[goods_seo_desc_short]"] = $descr;
+        //$this->params["form[goods_seo_desc_short]"] = $descr;
         $this->params["form[goods_description]"] = $descr;
     }
 
     public function setFullDescription($descr)
     {
         $this->params["form[goods_desc_large]"] = $descr;
-        $this->params["form[goods_seo_desc_large]"] = $descr;
+        //$this->params["form[goods_seo_desc_large]"] = $descr;
     }
 
     public function setFeature($fName, $fValue)
