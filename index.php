@@ -25,9 +25,13 @@ $cid = 'cid_4951221';   // Ostberg
 $dom = new DOMDocument;
 $dom->preserveWhiteSpace = false;
 
+$products = [];
+
+$oldItems = [];
+$newItems = [];
 $wrongItems = [];
 
-$products = [];
+header('Content-Type: text/html; charset=utf-8');
 
 do {
     $load = $dom->loadHTMLFile($url);
@@ -122,7 +126,7 @@ do {
 
 
         $products[] = array_map_recursive('trim', $prod);
-        //break;
+        putProduct($prod, $urlRoot, $cid, $newItems, $oldItems, $wrongItems);
     }
 
     $notLastPage = false;
@@ -137,17 +141,12 @@ do {
         }
     }
 
-
 } while ($notLastPage);
 
-header('Content-Type: text/html; charset=utf-8');
+function putProduct($prod, $urlRoot, $cid, &$newItems, &$oldItems, &$wrongItems)
+{
+    try {
 
-try {
-
-    $oldItems = [];
-    $newItems = [];
-
-    foreach ($products as $prod) {
         $qc = new QueryCreator($cid);
         $qc->setImage($urlRoot . $prod['img_src']);
         $qc->setName($prod['name']);
@@ -166,34 +165,36 @@ try {
         } else {
             throw new Exception('internal error');
         }
+
+    } catch (Exception $e) {
+        $msg = date(DATE_RFC822) . " >\nLine: " . $e->getLine() . "\nMessage:\n" . $e->getMessage() . "\n\n";
+        error_log($msg, 3, ERROR_LOG_FILE);
+        mail(EMAIL, 'Ошибка в парсере', $msg);
+        echo '<pre>';
+        echo 'Произошла ошибка:<br>';
+        echo $msg;
+        echo '</pre>';
+        return false;
     }
 
-    $str = "Завершен парсинг страницы\n"
-        . "$url\nв пункт '$cid'\n"
-        . "Добавлены элементы:\n"
-        . print_r($newItems, true) . "\n\n"
-        . "Элементы, проигнорированные как уже существующие:\n"
-        . print_r($oldItems, true)
-        . "Пропущенные по причине ошибок элементы:\n"
-        . print_r($wrongItems, true);
-
-    echo "<pre>\n$str\n</pre>";
-
-    $msg = date(DATE_RFC822) . " >\n$str\n\n";
-    error_log($msg, 3, RESULT_LOG_FILE);
-
-    mail(EMAIL, 'Произведен парсинг', $msg);
-
-} catch (Exception $e) {
-    $msg = date(DATE_RFC822) . " >\nLine: " . $e->getLine() . "\nMessage:\n" . $e->getMessage() . "\n\n";
-    error_log($msg, 3, ERROR_LOG_FILE);
-    mail(EMAIL, 'Ошибка в парсере', $msg);
-    echo '<pre>';
-    echo 'Произошла ошибка:<br>';
-    echo $msg;
-    echo '</pre>';
-    exit;
+    return true;
 }
+
+$str = "Завершен парсинг страницы\n"
+    . "$url\nв пункт '$cid'\n"
+    . "Добавлены элементы:\n"
+    . print_r($newItems, true) . "\n\n"
+    . "Элементы, проигнорированные как уже существующие:\n"
+    . print_r($oldItems, true) . "\n\n"
+    . "Пропущенные по причине ошибок элементы:\n"
+    . print_r($wrongItems, true);
+
+echo "<pre>\n$str\n</pre>";
+
+$msg = date(DATE_RFC822) . " >\n$str\n\n";
+error_log($msg, 3, RESULT_LOG_FILE);
+
+mail(EMAIL, 'Произведен парсинг', $msg);
 
 /*echo '<pre>';
 print_r($products);
