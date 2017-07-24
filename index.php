@@ -3,6 +3,10 @@
 error_reporting(E_ALL ^ E_WARNING);
 ini_set('display_errors', 1);
 
+define('EMAIL', 'TwilightTower@mail.ru');
+define('RESULT_LOG_FILE', __DIR__ . '/logs/log.log');
+define('ERROR_LOG_FILE', __DIR__ . '/logs/error.log');
+
 require_once('DataReader.class.php');
 require_once('QueryCreator.class.php');
 
@@ -17,6 +21,7 @@ function array_map_recursive($callback, $array)
 
 $urlRoot = 'https://iclim.ru';
 $url = $urlRoot . '/catalog/ventilyatsiya/ventilyatsionnye_ustanovki/pritochno_vytyazhnye_ustanovki/tag/ostberg/?filter=arCatalogFilter_20_195255756:Y&sort=shows';
+$cid = 'cid_4951221';   // Ostberg
 
 $dom = new DOMDocument;
 $dom->preserveWhiteSpace = false;
@@ -102,29 +107,46 @@ try {
     $oldItems = [];
     $newItems = [];
 
-    $qc = new QueryCreator('cid_4951221');
-    $qc->setImage($urlRoot . $products[0]['img_src']);
-    $qc->setName($products[0]['name']);
-    $qc->setShortDescription($products[0]['short_description']);
-    $qc->setFullDescription($products[0]['full_description']);
+    foreach ($products as $prod) {
 
-    foreach ($products[0]['features'] as $feature) {
-        $qc->setFeature($feature['name'], $feature['value']);
+        $qc = new QueryCreator($cid);
+        $qc->setImage($urlRoot . $products[0]['img_src']);
+        $qc->setName($products[0]['name']);
+        $qc->setShortDescription($products[0]['short_description']);
+        $qc->setFullDescription($products[0]['full_description']);
+
+        foreach ($products[0]['features'] as $feature) {
+            $qc->setFeature($feature['name'], $feature['value']);
+        }
+
+        $res = $qc->postNewItem();
+        if ($res == 'already_exists') {
+            $oldItems[] = $products[0]['name'];
+        } elseif ($res == 'item_set') {
+            $newItems[] = $products[0]['name'];
+        } else {
+            throw new Exception('internal error');
+        }
     }
 
-    $res = $qc->postNewItem();
-    if ($res == 'already_exists') {
-        $oldItems[] = $products[0]['name'];
-    } elseif ($res == 'item_set') {
-        $newItems[] = $products[0]['name'];
-    } else {
-        throw new Exception('internal error');
-    }
+    $str = "Завершен парсинг страницы\n"
+        . "$url\nв пункт '$cid'\n"
+        . "Добавлены элементы:\n"
+        . print_r($newItems, true) . "\n\n"
+        . "Элементы, проигнорированные как уже существующие:\n"
+        . print_r($oldItems, true);
+
+    echo "<pre>\n$str\n</pre>";
+
+    $msg = date(DATE_RFC822) . " >\n$str\n\n";
+    error_log($msg, 3, RESULT_LOG_FILE);
+
+    mail(EMAIL, 'Произведен парсинг', $msg);
 
 } catch (Exception $e) {
     $msg = date(DATE_RFC822) . " >\nLine: " . $e->getLine() . "\nMessage:\n" . $e->getMessage() . "\n\n";
-    error_log($msg, 3, 'error.log');
-    mail('TwilightTower@mail.ru', 'Ошибка в парсере', $msg);
+    error_log($msg, 3, ERROR_LOG_FILE);
+    mail(EMAIL, 'Ошибка в парсере', $msg);
     echo '<pre>';
     echo 'Произошла ошибка:<br>';
     echo $msg;
@@ -132,6 +154,6 @@ try {
     exit;
 }
 
-echo '<pre>';
+/*echo '<pre>';
 print_r($products);
-echo '</pre>';
+echo '</pre>';*/
