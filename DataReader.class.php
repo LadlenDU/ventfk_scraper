@@ -351,7 +351,9 @@ class DataReader
 
         curl_close($ch);
 
-        if (strpos($result, 'Не найдено ни одного товара') !== false) {
+        $resultDec = json_decode($result, true);
+
+        if (strpos($resultDec['data'], 'Не найдено ни одного товара') !== false) {
             return false;
         }
 
