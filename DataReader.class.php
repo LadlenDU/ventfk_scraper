@@ -328,7 +328,7 @@ class DataReader
             'method' => 'cat-data',
             'request_type' => 'store_catalog',
             'only_data' => 1,
-            'per_page' => 1,
+            'per_page' => 5000,
             'page' => 0,
             'search_q' => $name,
             'id' => 'all_goods',
@@ -354,6 +354,12 @@ class DataReader
         $resultDec = json_decode($result, true);
 
         if (strpos($resultDec['data'], 'Не найдено ни одного товара') !== false) {
+            return false;
+        }
+
+        // Иногда находит неправильно - поищем совпадения
+        $nameA = $name . '</a>';
+        if (strpos($resultDec['data'], $nameA) === false) {
             return false;
         }
 
