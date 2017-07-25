@@ -11,7 +11,7 @@ require_once('functions.php');
 if (!empty($_POST['cid'])) {
 
     //$url = 'https://iclim.ru/catalog/ventilyatsiya/ventilyatsionnye_ustanovki/pritochno_vytyazhnye_ustanovki/tag/ostberg/?filter=arCatalogFilter_20_195255756:Y&sort=shows';
-    $url = trim($_POST['url']);
+    $origUrl = $url = trim($_POST['url']);
 
     $urlElements = parse_url($url);
     $urlRoot = $urlElements['scheme'] . '://' . $urlElements['host'];
@@ -31,13 +31,23 @@ if (!empty($_POST['cid'])) {
 
     header('Content-Type: text/html; charset=utf-8');
 
+    $stubCounter = 1;
+
     do {
+
+        $parts = parse_url($url);
+        parse_str($parts['query'], $qParts);
+        if (isset($qParts['PAGEN_1']) && $qParts['PAGEN_1'] > PAGES_LIMIT) {
+            break;
+        }
+        if ($stubCounter++ > PAGES_LIMIT) {
+            break;
+        }
+
         $load = $dom->loadHTMLFile($url);
         $xpath = new DOMXPath($dom);
 
         $items = $xpath->query("//div[@id='catalog_list']/div[@class='bx_catalog_item']/div[@class='bx_catalog_item_container']");
-
-        $stubCounter = 1;
 
         foreach ($items as $itmKey => $itm) {
             $prod = [];
@@ -147,22 +157,13 @@ if (!empty($_POST['cid'])) {
             }
         }
 
-        $parts = parse_url($url);
-        parse_str($parts['query'], $qParts);
-        if (isset($qParts['PAGEN_1']) && $qParts['PAGEN_1'] > PAGES_LIMIT) {
-            $notLastPage = false;
-        }
-        if ($stubCounter++ > PAGES_LIMIT) {
-            $notLastPage = false;
-        }
-
     } while ($notLastPage);
 
     $cat_name = trim($_POST['cat_name']);
     $email = trim($_POST['email']);
 
     $str = "Завершен парсинг страницы\n"
-        . "$url\nв пункт '$cat_name, id:$cid'\n"
+        . "$origUrl\nв пункт '$cat_name, id:$cid'\n"
         . "Отчет отправлен на адрес $email\n"
         . "Добавлены элементы:\n"
         . print_r($newItems, true) . "\n\n"
@@ -171,22 +172,19 @@ if (!empty($_POST['cid'])) {
         . "Пропущенные по причине ошибок элементы:\n"
         . print_r($wrongItems, true);
 
-    echo "<pre>\n$str\n</pre>";
+    $resultString = "<pre>\n$str\n</pre>";
 
     $msg = date(DATE_RFC822) . " >\n$str\n\n";
     error_log($msg, 3, RESULT_LOG_FILE);
 
     mail($email, 'Произведен парсинг', $msg);
-    exit;
-} else {
-    $dr = new DataReader();
-    $dr->login();
-    $catalog = $dr->getCatalogJs();
+    //exit;
 }
 
-/*echo '<pre>';
-print_r($products);
-echo '</pre>';*/
+$dr = new DataReader();
+$dr->login();
+$catalog = $dr->getCatalogJs();
+
 ?>
 <!DOCTYPE html>
 <html lang="ru">
@@ -208,6 +206,10 @@ echo '</pre>';*/
 </head>
 <body>
 
+<?php if (!empty($resultString)): ?>
+<?php echo $resultString ?><br><br>
+<?php endif; ?>
+
 <div id="categories" style="width:550px;float:left;font-size: 13px;overflow-x: auto">
     Размещение:<br>
 
@@ -215,9 +217,12 @@ echo '</pre>';*/
 </div>
 <div style="width:500px;float:left">
     <form method="post">
-        <label>E-mail отчета:<br><input type="text" name="email" value="<?php echo htmlspecialchars(EMAIL); ?>" style="width:100%"></label><br><br>
-        <label>Название категории:<br><input type="text" name="cat_name" style="width:100%;background-color:#EEE" readonly="readonly"></label><br>
-        <label>CID (размещение):<br><input type="text" name="cid" style="width:100%;background-color:#EEE" readonly="readonly"></label><br><br>
+        <label>E-mail отчета:<br><input type="text" name="email" value="<?php echo htmlspecialchars(EMAIL); ?>"
+                                        style="width:100%"></label><br><br>
+        <label>Название категории:<br><input type="text" name="cat_name" style="width:100%;background-color:#EEE"
+                                             readonly="readonly"></label><br>
+        <label>CID (размещение):<br><input type="text" name="cid" style="width:100%;background-color:#EEE"
+                                           readonly="readonly"></label><br><br>
         <label>Url донора (первая страница):<br><input type="text" name="url" style="width:100%"></label><br><br>
         <label>Проценты к цене (отрицательное значение - минус проценты):<br><input type="text" name="percent"
                                                                                     style="width:100%"
