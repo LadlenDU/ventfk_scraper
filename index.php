@@ -239,9 +239,10 @@ echo '</pre>';*/
             // listen for event
             .on('changed.jstree', function (e, data) {
                 var text = data.instance.get_node(data.selected[0]).text;
-                var cat_name = text.match(/^(.+), id:/);
+                var catName = text.match(/^(.+), id:/);
                 var cid = text.match(/id:(.+)$/);
-                $("input[name=cat_name]").val(cat_name[1]);
+                var modCatName = catName[1].replace(/<i.+i>/, '');
+                $("input[name=cat_name]").val(modCatName);
                 $("input[name=cid]").val(cid[1]);
             })
     });
