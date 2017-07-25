@@ -37,6 +37,8 @@ if (!empty($_POST['cid'])) {
 
         $items = $xpath->query("//div[@id='catalog_list']/div[@class='bx_catalog_item']/div[@class='bx_catalog_item_container']");
 
+        $stubCounter = 1;
+
         foreach ($items as $itmKey => $itm) {
             $prod = [];
 
@@ -79,13 +81,20 @@ if (!empty($_POST['cid'])) {
             $descrFullElem = $xpathFull->query("//div[@id='desc_txt_tab']/div/div[@class='bx_item_description']")->item(0);
             $featureFullElem = $xpathFull->query("//div[@id='prop_txt_tab']/div/div[@class='item_info_section']")->item(0);
 
+            $priceFullElem = $xpathFull->query("//div[@class='item_current_price']")->item(0);
+
             if (!$descrFullElem || !$featureFullElem) {
                 $wrongItems[] = ['url' => $fullUrl, 'key' => $itmKey, 'stage' => 4];
+                continue;
+            }
+            if (!$priceFullElem) {
+                $wrongItems[] = ['url' => $fullUrl, 'key' => $itmKey, 'stage' => 5];
                 continue;
             }
 
             $prod['full_description'] = $descrFullElem->ownerDocument->saveHTML($descrFullElem);
             $prod['full_feature'] = $featureFullElem->ownerDocument->saveHTML($featureFullElem);
+            $prod['price'] = $priceFullElem->ownerDocument->saveHTML($priceFullElem);
 
             // Характеристики
             $domFeature = new DOMDocument;
@@ -122,9 +131,8 @@ if (!empty($_POST['cid'])) {
                 }
             }
 
-
             $products[] = array_map_recursive('trim', $prod);
-            putProduct($prod, $urlRoot, $cid, $newItems, $oldItems, $wrongItems);
+            putProduct($prod, $urlRoot, $cid, $pricePercent, $newItems, $oldItems, $wrongItems);
         }
 
         $notLastPage = false;
@@ -139,11 +147,20 @@ if (!empty($_POST['cid'])) {
             }
         }
 
+
+        $parts = parse_url($url);
+        if ($stubCounter++ > 2) {
+            $notLastPage = false;
+        }
+
     } while ($notLastPage);
 
+    $cat_name = trim($_POST['cat_name']);
+    $email = trim($_POST['email']);
 
     $str = "Завершен парсинг страницы\n"
-        . "$url\nв пункт '$cid'\n"
+        . "$url\nв пункт '$cat_name, id:$cid'\n"
+        . "Отчет отправлен на адрес $email\n"
         . "Добавлены элементы:\n"
         . print_r($newItems, true) . "\n\n"
         . "Элементы, проигнорированные как уже существующие:\n"
@@ -156,7 +173,7 @@ if (!empty($_POST['cid'])) {
     $msg = date(DATE_RFC822) . " >\n$str\n\n";
     error_log($msg, 3, RESULT_LOG_FILE);
 
-    mail(EMAIL, 'Произведен парсинг', $msg);
+    mail($email, 'Произведен парсинг', $msg);
     exit;
 } else {
     $dr = new DataReader();
@@ -195,8 +212,9 @@ echo '</pre>';*/
 </div>
 <div style="width:500px;float:left">
     <form method="post">
-        <label>E-mail:<br><input type="text" name="email" value="<?php echo htmlspecialchars(EMAIL); ?>" style="width:100%"></label><br><br>
-        <label>CID (размещение):<br><input type="text" name="cid" style="width:100%"></label><br><br>
+        <label>E-mail отчета:<br><input type="text" name="email" value="<?php echo htmlspecialchars(EMAIL); ?>" style="width:100%"></label><br><br>
+        <label>Название категории:<br><input type="text" name="cat_name" style="width:100%;background-color:#EEE" readonly="readonly"></label><br>
+        <label>CID (размещение):<br><input type="text" name="cid" style="width:100%;background-color:#EEE" readonly="readonly"></label><br><br>
         <label>Url донора (первая страница):<br><input type="text" name="url" style="width:100%"></label><br><br>
         <label>Проценты к цене (отрицательное значение - минус проценты):<br><input type="text" name="percent"
                                                                                     style="width:100%"
@@ -221,9 +239,10 @@ echo '</pre>';*/
             // listen for event
             .on('changed.jstree', function (e, data) {
                 var text = data.instance.get_node(data.selected[0]).text;
+                var cat_name = text.match(/^(.+), id:/);
                 var cid = text.match(/id:(.+)$/);
+                $("input[name=cat_name]").val(cat_name[1]);
                 $("input[name=cid]").val(cid[1]);
-                //console.log(cid);
             })
     });
 
