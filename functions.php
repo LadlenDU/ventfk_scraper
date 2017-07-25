@@ -9,7 +9,7 @@ function array_map_recursive($callback, $array)
     return array_map($func, $array);
 }
 
-function putProduct($prod, $urlRoot, $cid, &$newItems, &$oldItems, &$wrongItems)
+function putProduct($prod, $urlRoot, $cid, $priceCorrectPercent, &$newItems, &$oldItems, &$wrongItems)
 {
     try {
 
@@ -18,6 +18,7 @@ function putProduct($prod, $urlRoot, $cid, &$newItems, &$oldItems, &$wrongItems)
         $qc->setName($prod['name']);
         $qc->setShortDescription($prod['short_description']);
         $qc->setFullDescription($prod['full_description']);
+        $qc->setPrice($prod['price'], $priceCorrectPercent);
 
         foreach ($prod['features'] as $feature) {
             $qc->setFeature($feature['name'], $feature['value']);
