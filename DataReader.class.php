@@ -133,7 +133,8 @@ class DataReader
         $this->findSearchVersion();
     }
 
-    protected function findSearchVersion() {
+    protected function findSearchVersion()
+    {
         $ch = curl_init();
 
         $this->setCommonCurlOpt($ch);
@@ -366,7 +367,7 @@ class DataReader
         return true;
     }
 
-    public function getCatalog()
+    public function getCatalogJs()
     {
         $ch = curl_init();
 
@@ -381,15 +382,47 @@ class DataReader
             throw new Exception("Can't get catalog. Info:\n$info\n");
         }
 
-        $dom = new DOMDocument;
-        $dom->preserveWhiteSpace = false;
-        $dom->loadHTML($result);
-        $xpath = new DOMXPath($dom);
+        curl_close($ch);
 
-        $catalogHtmlLink = $xpath->query("//li[@id='root']")->item(0);
-        $catalogHtml = $dom->loadHTML($catalogHtmlLink);
-        $xpath = new DOMXPath($dom);
+
+        preg_match('/var\s+w1.+;/Usu', $result, $matches);
+        $vars = $matches[0];
+        preg_match("/eval\('var goodsCatalog = .+'\);/Usu", $result, $matches);
+
+        //preg_match('/<script type="text\/javascript">\s*\$\(document\).ready\(function\(\)\{\s*var\s+w1.+<\/script>/Usu', $result, $matches);
+        //preg_match('/<script type="text\/javascript">\s*\$\(document\)\.ready\(function\(\)\{\s*var\s+w1.+<\//U', $result, $matches);
+        return $vars . "\n" . $matches[0];
+
+        /*preg_match("/eval\('var goodsCatalog = (.*)'\)/U", $result, $matches);
+        if (!$matches[0]) {
+            throw new Exception("Can't get 'var goodsCatalog'. Result:\n$result\n");
+        }*/
+
+        /* $replacedResult = str_replace('" + "', '', $matches[1]);
+
+         $w1 = json_encode(' <i title="Индекс отражает количество товаров, находящихся в категории склада «');
+         $w2 = json_encode('»" class="JsTreeGoodsIndex">');
+         $c1 = json_encode(' <i title="Индекс отражает количество товаров, размещенных в товарной категории «');
+         $c2 = json_encode('»" class="JsTreeGoodsIndex">');
+
+         $replacedResult = preg_replace('/"\s*\+\s*w1\s*\+\s*"/U', substr($w1, 1, -1), $replacedResult);
+         $replacedResult = preg_replace('/"\s*\+\s*w2\s*\+\s*"/U', substr($w2, 1, -1), $replacedResult);
+         $replacedResult = preg_replace('/"\s*\+\s*c1\s*\+\s*"/U', substr($c1, 1, -1), $replacedResult);
+         $replacedResult = preg_replace('/"\s*\+\s*c2\s*\+\s*"/U', substr($c2, 1, -1), $replacedResult);
+
+         $replacedResultDecoded = json_decode($replacedResult, true);
+
+         $dom = new DOMDocument;
+         $dom->preserveWhiteSpace = false;
+         $dom->loadHTML($matches[1]);
+         $xpath = new DOMXPath($dom);
+
+         $catalogHtmlLink = $xpath->query("//li[@id='root']")->item(0);
+         $catalogHtml = $dom->loadHTML($catalogHtmlLink);
+         $xpath = new DOMXPath($dom);*/
 
         curl_close($ch);
+
+        return $matches[0];
     }
 }
