@@ -93,7 +93,6 @@ class QueryCreator
     }
 
     public function setPrice($price, $correctPercent) {
-        $price = str_replace(' ', '', $price);
         $floatPrice = (float)$price;
         $modPrice = $floatPrice + ($floatPrice / 100 * (int)$correctPercent);
         $this->params["form[property][$this->propKey][cost_now]"] = $modPrice;

@@ -94,7 +94,7 @@ if (!empty($_POST['cid'])) {
 
             $prod['full_description'] = $descrFullElem->ownerDocument->saveHTML($descrFullElem);
             $prod['full_feature'] = $featureFullElem->ownerDocument->saveHTML($featureFullElem);
-            $prod['price'] = $priceFullElem->ownerDocument->saveHTML($priceFullElem);
+            $prod['price'] = str_replace(['руб.', 'руб', ' '], '', $priceFullElem->textContent);
 
             // Характеристики
             $domFeature = new DOMDocument;
@@ -147,9 +147,12 @@ if (!empty($_POST['cid'])) {
             }
         }
 
-
         $parts = parse_url($url);
-        if ($stubCounter++ > 2) {
+        parse_str($parts['query'], $qParts);
+        if (isset($qParts['PAGEN_1']) && $qParts['PAGEN_1'] > PAGES_LIMIT) {
+            $notLastPage = false;
+        }
+        if ($stubCounter++ > PAGES_LIMIT) {
             $notLastPage = false;
         }
 
