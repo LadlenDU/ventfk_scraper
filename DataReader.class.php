@@ -356,8 +356,13 @@ class DataReader
 
             $resultDec = json_decode($result, true);
             if (isset($resultDec['status']) && $resultDec['status'] == 'reload') {
-                $this->login();
-                if ($cycleCount++ < 2) {
+                //$this->login();
+                if (!empty($resultDec['version'])) {
+                    $this->searchVersion = $resultDec['version'];
+                } else {
+                    $this->login();
+                }
+                if ($cycleCount++ < 3) {
                     continue;
                 }
             }
