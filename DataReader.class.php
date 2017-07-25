@@ -323,6 +323,7 @@ class DataReader
 
     public function ifItemExists($name)
     {
+        $cycleCount = 0;
         for (; ;) {
             $ch = curl_init();
 
@@ -356,7 +357,9 @@ class DataReader
             $resultDec = json_decode($result, true);
             if (isset($resultDec['status']) && $resultDec['status'] == 'reload') {
                 $this->login();
-                continue;
+                if ($cycleCount++ < 2) {
+                    continue;
+                }
             }
 
             break;
