@@ -323,36 +323,48 @@ class DataReader
 
     public function ifItemExists($name)
     {
-        $ch = curl_init();
+        for (; ;) {
+            $ch = curl_init();
 
-        $params = [
-            'method' => 'cat-data',
-            'request_type' => 'store_catalog',
-            'only_data' => 1,
-            'per_page' => 5000,
-            'page' => 0,
-            'search_q' => $name,
-            'id' => 'all_goods',
-            //'version' => 'ddd187',
-            'version' => $this->searchVersion,
-            'ajax_q' => 1,
-        ];
+            $params = [
+                'method' => 'cat-data',
+                'request_type' => 'store_catalog',
+                'only_data' => 1,
+                'per_page' => 5000,
+                'page' => 0,
+                'search_q' => $name,
+                'id' => 'all_goods',
+                //'version' => 'ddd187',
+                'version' => $this->searchVersion,
+                'ajax_q' => 1,
+            ];
 
-        $this->setCommonCurlOpt($ch);
-        curl_setopt($ch, CURLOPT_POST, true);
-        curl_setopt($ch, CURLOPT_POSTFIELDS, $params);
-        curl_setopt($ch, CURLOPT_URL, 'http://ventfabrika.su/admin/store_catalog');
+            $this->setCommonCurlOpt($ch);
+            curl_setopt($ch, CURLOPT_POST, true);
+            curl_setopt($ch, CURLOPT_POSTFIELDS, $params);
+            curl_setopt($ch, CURLOPT_URL, 'http://ventfabrika.su/admin/store_catalog');
 
-        $result = curl_exec($ch);
+            $result = curl_exec($ch);
 
-        if (!$result) {
-            $info = $this->getCurlErrorInfo($ch);
-            throw new Exception("Can't find item. Info:\n$info\n");
+            if (!$result) {
+                $info = $this->getCurlErrorInfo($ch);
+                throw new Exception("Can't find item. Info:\n$info\n");
+            }
+
+            curl_close($ch);
+
+            $resultDec = json_decode($result, true);
+            if (isset($resultDec['status']) && $resultDec['status'] == 'reload') {
+                $this->login();
+                continue;
+            }
+
+            break;
         }
 
-        curl_close($ch);
-
-        $resultDec = json_decode($result, true);
+        if (!isset($resultDec['data'])) {
+            throw new Exception("Не найден необходимый элемент 'data'. \$resultDec:\n$resultDec\n");
+        }
 
         if (strpos($resultDec['data'], 'Не найдено ни одного товара') !== false) {
             return false;
