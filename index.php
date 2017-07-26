@@ -23,11 +23,11 @@ if (!empty($_POST['cid'])) {
     $dom = new DOMDocument;
     $dom->preserveWhiteSpace = false;
 
-    $products = [];
+    $products = array();
 
-    $oldItems = [];
-    $newItems = [];
-    $wrongItems = [];
+    $oldItems = array();
+    $newItems = array();
+    $wrongItems = array();
 
     header('Content-Type: text/html; charset=utf-8');
 
@@ -45,11 +45,11 @@ if (!empty($_POST['cid'])) {
         $items = $xpath->query("//div[@id='catalog_list']/div[@class='bx_catalog_item']/div[@class='bx_catalog_item_container']");
 
         foreach ($items as $itmKey => $itm) {
-            $prod = [];
+            $prod = array();
 
             $imgElem = $xpath->query("./a[@class='bx_catalog_item_images']", $itm)->item(0);
             if (!$imgElem) {
-                $wrongItems[] = ['url' => $url, 'key' => $itmKey, 'stage' => 1];
+                $wrongItems[] = array('url' => $url, 'key' => $itmKey, 'stage' => 1);
                 continue;
             }
 
@@ -61,13 +61,13 @@ if (!empty($_POST['cid'])) {
 
             $tmp = $xpath->query("./div[@class='discribe']/div[@class='bx_catalog_item_title']/a", $itm)->item(0);
             if (!$tmp) {
-                $tmp[] = ['url' => $url, 'key' => $itmKey, 'stage' => 2];
+                $tmp[] = array('url' => $url, 'key' => $itmKey, 'stage' => 2);
                 continue;
             }
             $prod['name'] = $tmp->nodeValue;
             $tmp = $xpath->query("./div[@class='discribe']/div[@class='prev_txt']", $itm)->item(0);
             if (!$tmp) {
-                $tmp[] = ['url' => $url, 'key' => $itmKey, 'stage' => 3];
+                $tmp[] = array('url' => $url, 'key' => $itmKey, 'stage' => 3);
                 continue;
             }
             $prod['short_description'] = $tmp->nodeValue;
@@ -89,11 +89,11 @@ if (!empty($_POST['cid'])) {
             $vendorCodeFullElem = $xpathFull->query("//div[@class='detail_articul']/span")->item(0);
 
             if (!$descrFullElem || !$featureFullElem) {
-                $wrongItems[] = ['url' => $fullUrl, 'key' => $itmKey, 'stage' => 4];
+                $wrongItems[] = array('url' => $fullUrl, 'key' => $itmKey, 'stage' => 4);
                 continue;
             }
             if (!$priceFullElem) {
-                $wrongItems[] = ['url' => $fullUrl, 'key' => $itmKey, 'stage' => 5];
+                $wrongItems[] = array('url' => $fullUrl, 'key' => $itmKey, 'stage' => 5);
                 continue;
             }
 
@@ -108,12 +108,12 @@ if (!empty($_POST['cid'])) {
             $loadFeature = $domFeature->loadHTML('<?xml encoding="utf-8" ?>' . $prod['full_feature']);
             $xpathFeature = new DOMXPath($domFeature);
 
-            $prod['features'] = [];
+            $prod['features'] = array();
 
             $trs = $xpathFeature->query("//div[@class='item_info_section']/table/tr");
             foreach ($trs as $tr) {
 
-                $feature = [];
+                $feature = array();
 
                 $counter = 0;
                 foreach ($tr->childNodes as $node) {

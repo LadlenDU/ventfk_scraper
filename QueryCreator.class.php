@@ -4,7 +4,7 @@ require_once('DataReader.class.php');
 
 class QueryCreator
 {
-    protected $params = [];
+    protected $params = array();
 
     protected static $to;
 

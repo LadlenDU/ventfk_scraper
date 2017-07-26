@@ -65,10 +65,10 @@ class DataReader
     {
         $ch = curl_init();
 
-        $data = [
+        $data = array(
             'sess_id' => $sessId,
             'sess_hash' => $sessHash,
-        ];
+        );
 
         $this->setCommonCurlOpt($ch);
         curl_setopt($ch, CURLOPT_POST, true);
@@ -91,7 +91,7 @@ class DataReader
 
         $hash = $this->loadLoginPage();
 
-        $data = [
+        $data = array(
             'act' => 'login',
             'action_to' => 'http://storeland.ru/',
             'site_id' => '',
@@ -99,7 +99,7 @@ class DataReader
             'hash' => $hash,
             'form[user_mail]' => STORELAND_LOGIN,
             'form[user_pass]' => STORELAND_PASSWORD,
-        ];
+        );
 
         $ch = curl_init();
 
@@ -177,12 +177,12 @@ class DataReader
         $fName = pathinfo($url, PATHINFO_BASENAME);
 
         $cImage = new CURLFile($tmpName, mime_content_type($tmpName), $fName);
-        $data = ['form[ajax_images][]' => $cImage,
+        $data = array('form[ajax_images][]' => $cImage,
             'ajax_q' => 1,
             'form[goods_id]' => 'NaN',
             //'form[images_ids][0]' => 'img_699860198617'
             'form[images_ids][0]' => $imageId,
-        ];
+        );
 
         $ch = curl_init();
 
@@ -262,7 +262,7 @@ class DataReader
 
     public function getNormCharacteristics()
     {
-        $chars = [];  // lowercase names
+        $chars = array();  // lowercase names
 
         $characts = $this->getCharacteristics();
         foreach ($characts as $elem) {
@@ -327,7 +327,7 @@ class DataReader
         for (; ;) {
             $ch = curl_init();
 
-            $params = [
+            $params = array(
                 'method' => 'cat-data',
                 'request_type' => 'store_catalog',
                 'only_data' => 1,
@@ -338,7 +338,7 @@ class DataReader
                 //'version' => 'ddd187',
                 'version' => $this->searchVersion,
                 'ajax_q' => 1,
-            ];
+            );
 
             $this->setCommonCurlOpt($ch);
             curl_setopt($ch, CURLOPT_POST, true);
