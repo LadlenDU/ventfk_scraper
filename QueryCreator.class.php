@@ -92,10 +92,36 @@ class QueryCreator
         //$this->params["form[goods_seo_desc_large]"] = $descr;
     }
 
-    public function setPrice($price, $correctPercent) {
+    public function setPrice($price, $correctPercent)
+    {
         $floatPrice = (float)$price;
         $modPrice = $floatPrice + ($floatPrice / 100 * (int)$correctPercent);
         $this->params["form[property][$this->propKey][cost_now]"] = $modPrice;
+    }
+
+    public function setVendorCode($code)
+    {
+        global $VENDOR_CODE_OFFSET;
+
+        $newCode = '';
+
+        $code = (string)$code;
+        $count = 0;
+        $len = strlen($code);
+        for ($i = 0; $i < $len; ++$i) {
+            $char = $code[$i];
+            if (in_array($char, ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'])) {
+                $numStr = (string)($char + $VENDOR_CODE_OFFSET[$count]);
+                $newCode .= substr($numStr, -1);
+                ++$count;
+            } else {
+                $newCode .= $char;
+            }
+        }
+
+        $newCode .= mt_rand(0, 9);
+
+        $this->params["form[property][$this->propKey][art_number]"] = $newCode;
     }
 
     public function setFeature($fName, $fValue)

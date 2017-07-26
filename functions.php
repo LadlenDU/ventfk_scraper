@@ -19,6 +19,7 @@ function putProduct($prod, $urlRoot, $cid, $priceCorrectPercent, &$newItems, &$o
         $qc->setShortDescription($prod['short_description']);
         $qc->setFullDescription($prod['full_description']);
         $qc->setPrice($prod['price'], $priceCorrectPercent);
+        $qc->setVendorCode($prod['vendor_code']);
 
         foreach ($prod['features'] as $feature) {
             $qc->setFeature($feature['name'], $feature['value']);

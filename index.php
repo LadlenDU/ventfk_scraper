@@ -35,11 +35,6 @@ if (!empty($_POST['cid'])) {
 
     do {
 
-        $parts = parse_url($url);
-        parse_str($parts['query'], $qParts);
-        if (isset($qParts['PAGEN_1']) && $qParts['PAGEN_1'] > PAGES_LIMIT) {
-            break;
-        }
         if ($stubCounter++ > PAGES_LIMIT) {
             break;
         }
@@ -90,8 +85,8 @@ if (!empty($_POST['cid'])) {
 
             $descrFullElem = $xpathFull->query("//div[@id='desc_txt_tab']/div/div[@class='bx_item_description']")->item(0);
             $featureFullElem = $xpathFull->query("//div[@id='prop_txt_tab']/div/div[@class='item_info_section']")->item(0);
-
             $priceFullElem = $xpathFull->query("//div[@class='item_current_price']")->item(0);
+            $vendorCodeFullElem = $xpathFull->query("//div[@class='detail_articul']/span")->item(0);
 
             if (!$descrFullElem || !$featureFullElem) {
                 $wrongItems[] = ['url' => $fullUrl, 'key' => $itmKey, 'stage' => 4];
@@ -105,6 +100,7 @@ if (!empty($_POST['cid'])) {
             $prod['full_description'] = $descrFullElem->ownerDocument->saveHTML($descrFullElem);
             $prod['full_feature'] = $featureFullElem->ownerDocument->saveHTML($featureFullElem);
             $prod['price'] = str_replace(['руб.', 'руб', ' '], '', $priceFullElem->textContent);
+            $prod['vendor_code'] = trim($vendorCodeFullElem->textContent);
 
             // Характеристики
             $domFeature = new DOMDocument;
@@ -177,7 +173,7 @@ if (!empty($_POST['cid'])) {
     $msg = date(DATE_RFC822) . " >\n$str\n\n";
     error_log($msg, 3, RESULT_LOG_FILE);
 
-    mail($email, 'Произведен парсинг', $msg);
+    mail($email, "Произведен парсинг для категории $cat_name", $msg);
     //exit;
 }
 
