@@ -110,7 +110,7 @@ class QueryCreator
         $len = strlen($code);
         for ($i = 0; $i < $len; ++$i) {
             $char = $code[$i];
-            if (in_array($char, ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'])) {
+            if (in_array($char, array('0', '1', '2', '3', '4', '5', '6', '7', '8', '9'))) {
                 $numStr = (string)($char + $VENDOR_CODE_OFFSET[$count]);
                 $newCode .= substr($numStr, -1);
                 ++$count;

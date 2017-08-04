@@ -35,7 +35,7 @@ class DataReader
         return "Errno: $err\nError: $errmsg\nInfo: $header";
     }
 
-    protected function loadLoginPage()
+    protected function loadLoginPage($add = false)
     {
         $ch = curl_init();
 
@@ -55,7 +55,32 @@ class DataReader
         preg_match('/<input type="hidden" name="hash" value="(.+)"/', $result, $matches);
 
         if (!$matches[1]) {
-            throw new Exception("Can't get hash from\n>>>>>\n$result\n<<<<<\n");
+            // Не пойми что - переадресация?
+            preg_match('#<script>window.location="(.+)";</script>#', $result, $matches);
+            if (!$matches[1]) {
+                throw new Exception("Can't get redirect address from\n>>>>>\n$result\n<<<<<\n");
+            }
+
+            $ch = curl_init();
+
+            $this->setCommonCurlOpt($ch);
+            curl_setopt($ch, CURLOPT_POST, false);
+            curl_setopt($ch, CURLOPT_URL, "https://storeland.ru/user/login" . $matches[1]);
+
+            $result = curl_exec($ch);
+
+            if (!$result) {
+                $info = $this->getCurlErrorInfo($ch);
+                throw new Exception("Can't load login page. Info:\n$info\n");
+            }
+
+            curl_close($ch);
+
+            preg_match('/<input type="hidden" name="hash" value="(.+)"/', $result, $matches);
+
+            if (!$matches[1]) {
+                throw new Exception("Can't get hash from\n>>>>>\n$result\n<<<<<\n");
+            }
         }
 
         return $matches[1];

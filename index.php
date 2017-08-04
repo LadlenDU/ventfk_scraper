@@ -99,7 +99,7 @@ if (!empty($_POST['cid'])) {
 
             $prod['full_description'] = $descrFullElem->ownerDocument->saveHTML($descrFullElem);
             $prod['full_feature'] = $featureFullElem->ownerDocument->saveHTML($featureFullElem);
-            $prod['price'] = str_replace(['руб.', 'руб', ' '], '', $priceFullElem->textContent);
+            $prod['price'] = str_replace(array('руб.', 'руб', ' '), '', $priceFullElem->textContent);
             $prod['vendor_code'] = trim($vendorCodeFullElem->textContent);
 
             // Характеристики
@@ -138,6 +138,7 @@ if (!empty($_POST['cid'])) {
             }
 
             $products[] = array_map_recursive('trim', $prod);
+            sleep(3);
             putProduct($prod, $urlRoot, $cid, $pricePercent, $newItems, $oldItems, $wrongItems);
         }
 

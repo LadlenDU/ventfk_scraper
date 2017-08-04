@@ -35,6 +35,7 @@ function putProduct($prod, $urlRoot, $cid, $priceCorrectPercent, &$newItems, &$o
         }
 
     } catch (Exception $e) {
+        $wrongItems[] = $prod['name'];
         $msg = date(DATE_RFC822) . " >\nLine: " . $e->getLine() . "\nMessage:\n" . $e->getMessage() . "\n\n";
         error_log($msg, 3, ERROR_LOG_FILE);
         mail(EMAIL, 'Ошибка в парсере', $msg);
