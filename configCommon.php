@@ -1,6 +1,6 @@
 <?php
 
-error_reporting(E_ALL ^ E_WARNING);
+error_reporting(E_ALL ^ E_WARNING ^ E_DEPRECATED);
 ini_set('display_errors', 1);
 
 set_time_limit(3600 * 5);
