@@ -88,18 +88,18 @@ if (!empty($_POST['cid'])) {
             $priceFullElem = $xpathFull->query("//div[@class='item_current_price']")->item(0);
             $vendorCodeFullElem = $xpathFull->query("//div[@class='detail_articul']/span")->item(0);
 
-            if (!$descrFullElem || !$featureFullElem) {
+            if (!$descrFullElem && !$featureFullElem) {
                 $wrongItems[] = array('url' => $fullUrl, 'key' => $itmKey, 'stage' => 4);
                 continue;
             }
-            if (!$priceFullElem) {
+            /*if (!$priceFullElem) {
                 $wrongItems[] = array('url' => $fullUrl, 'key' => $itmKey, 'stage' => 5);
                 continue;
-            }
+            }*/
 
-            $prod['full_description'] = $descrFullElem->ownerDocument->saveHTML($descrFullElem);
-            $prod['full_feature'] = $featureFullElem->ownerDocument->saveHTML($featureFullElem);
-            $prod['price'] = str_replace(array('руб.', 'руб', ' '), '', $priceFullElem->textContent);
+            $prod['full_description'] = $descrFullElem ? $descrFullElem->ownerDocument->saveHTML($descrFullElem) : '';
+            $prod['full_feature'] = $featureFullElem ? $featureFullElem->ownerDocument->saveHTML($featureFullElem) : '';
+            $prod['price'] = $priceFullElem ? str_replace(array('руб.', 'руб', ' '), '', $priceFullElem->textContent) : 0;
             $prod['vendor_code'] = trim($vendorCodeFullElem->textContent);
 
             // Характеристики
