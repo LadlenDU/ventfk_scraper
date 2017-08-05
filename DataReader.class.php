@@ -35,13 +35,28 @@ class DataReader
         return "Errno: $err\nError: $errmsg\nInfo: $header";
     }
 
-    protected function loadLoginPage($add = false)
+    /**
+     * Обход защиты DDOS
+     *
+     * @param string $result тело ответа
+     */
+    protected function getRedirectPageParameters($result)
+    {
+        preg_match('#<script>window.location="(.+)";</script>#', $result, $matches);
+        if (empty($matches[1])) {
+            throw new Exception("Can't get redirect address from\n>>>>>\n$result\n<<<<<\n");
+        }
+
+        return $matches[1];
+    }
+
+    protected function loadLoginPage($params = false)
     {
         $ch = curl_init();
 
         $this->setCommonCurlOpt($ch);
         curl_setopt($ch, CURLOPT_POST, false);
-        curl_setopt($ch, CURLOPT_URL, "https://storeland.ru/user/login");
+        curl_setopt($ch, CURLOPT_URL, "https://storeland.ru/user/login" . ($params ? $params : ''));
 
         $result = curl_exec($ch);
 
@@ -54,32 +69,13 @@ class DataReader
 
         preg_match('/<input type="hidden" name="hash" value="(.+)"/', $result, $matches);
 
-        if (!$matches[1]) {
-            // Не пойми что - переадресация?
-            preg_match('#<script>window.location="(.+)";</script>#', $result, $matches);
-            if (!$matches[1]) {
-                throw new Exception("Can't get redirect address from\n>>>>>\n$result\n<<<<<\n");
-            }
-
-            $ch = curl_init();
-
-            $this->setCommonCurlOpt($ch);
-            curl_setopt($ch, CURLOPT_POST, false);
-            curl_setopt($ch, CURLOPT_URL, "https://storeland.ru/user/login" . $matches[1]);
-
-            $result = curl_exec($ch);
-
-            if (!$result) {
-                $info = $this->getCurlErrorInfo($ch);
-                throw new Exception("Can't load login page. Info:\n$info\n");
-            }
-
-            curl_close($ch);
-
-            preg_match('/<input type="hidden" name="hash" value="(.+)"/', $result, $matches);
-
-            if (!$matches[1]) {
+        if (empty($matches[1])) {
+            if ($params) {
                 throw new Exception("Can't get hash from\n>>>>>\n$result\n<<<<<\n");
+            } else {
+                if ($foundParams = $this->getRedirectPageParameters($result)) {
+                    return $this->loadLoginPage($foundParams);
+                }
             }
         }
 
@@ -110,12 +106,8 @@ class DataReader
         curl_close($ch);
     }
 
-    public function login()
+    protected function loginToLoginPage($hash, $params = false)
     {
-        unlink($this->cookie);  // не оптимально но так проще
-
-        $hash = $this->loadLoginPage();
-
         $data = array(
             'act' => 'login',
             'action_to' => 'http://storeland.ru/',
@@ -131,7 +123,7 @@ class DataReader
         $this->setCommonCurlOpt($ch);
         curl_setopt($ch, CURLOPT_POST, true);
         curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
-        curl_setopt($ch, CURLOPT_URL, "https://storeland.ru/user/login");
+        curl_setopt($ch, CURLOPT_URL, "https://storeland.ru/user/login" . ($params ? $params : ''));
 
         $result = curl_exec($ch);
 
@@ -143,18 +135,37 @@ class DataReader
         curl_close($ch);
 
         preg_match('/<input type=hidden name="sess_id" value="(.+)"/', $result, $matches);
-        if (!$matches[1]) {
-            throw new Exception("Can't get sess_id from\n>>>>>\n$result\n<<<<<\n");
+
+        if (empty($matches[1])) {
+            if ($params) {
+                throw new Exception("Can't get sess_id from\n>>>>>\n$result\n<<<<<\n");
+            } else {
+                if ($foundParams = $this->getRedirectPageParameters($result)) {
+                    return $this->loginToLoginPage($hash, $foundParams);
+                }
+            }
         }
+
         $sessId = $matches[1];
 
         preg_match('/<input type=hidden name="sess_hash" value="(.+)"/', $result, $matches);
-        if (!$matches[1]) {
+        if (empty($matches[1])) {
             throw new Exception("Can't get sess_hash from\n>>>>>\n$result\n<<<<<\n");
         }
         $sessHash = $matches[1];
 
-        $this->loadVentfabricaLoginPage($sessId, $sessHash);
+        return array('sessId' => $sessId, 'sessHash' => $sessHash);
+    }
+
+    public function login()
+    {
+        unlink($this->cookie);  // не оптимально но так проще
+
+        $hash = $this->loadLoginPage();
+
+        $sessParams = $this->loginToLoginPage($hash);
+
+        $this->loadVentfabricaLoginPage($sessParams['sessId'], $sessParams['sessHash']);
         $this->findSearchVersion();
     }
 
@@ -434,40 +445,6 @@ class DataReader
         $vars = $matches[0];
         preg_match("/eval\('var goodsCatalog = .+'\);/Usu", $result, $matches);
 
-        //preg_match('/<script type="text\/javascript">\s*\$\(document\).ready\(function\(\)\{\s*var\s+w1.+<\/script>/Usu', $result, $matches);
-        //preg_match('/<script type="text\/javascript">\s*\$\(document\)\.ready\(function\(\)\{\s*var\s+w1.+<\//U', $result, $matches);
         return $vars . "\n" . $matches[0];
-
-        /*preg_match("/eval\('var goodsCatalog = (.*)'\)/U", $result, $matches);
-        if (!$matches[0]) {
-            throw new Exception("Can't get 'var goodsCatalog'. Result:\n$result\n");
-        }*/
-
-        /* $replacedResult = str_replace('" + "', '', $matches[1]);
-
-         $w1 = json_encode(' <i title="Индекс отражает количество товаров, находящихся в категории склада «');
-         $w2 = json_encode('»" class="JsTreeGoodsIndex">');
-         $c1 = json_encode(' <i title="Индекс отражает количество товаров, размещенных в товарной категории «');
-         $c2 = json_encode('»" class="JsTreeGoodsIndex">');
-
-         $replacedResult = preg_replace('/"\s*\+\s*w1\s*\+\s*"/U', substr($w1, 1, -1), $replacedResult);
-         $replacedResult = preg_replace('/"\s*\+\s*w2\s*\+\s*"/U', substr($w2, 1, -1), $replacedResult);
-         $replacedResult = preg_replace('/"\s*\+\s*c1\s*\+\s*"/U', substr($c1, 1, -1), $replacedResult);
-         $replacedResult = preg_replace('/"\s*\+\s*c2\s*\+\s*"/U', substr($c2, 1, -1), $replacedResult);
-
-         $replacedResultDecoded = json_decode($replacedResult, true);
-
-         $dom = new DOMDocument;
-         $dom->preserveWhiteSpace = false;
-         $dom->loadHTML($matches[1]);
-         $xpath = new DOMXPath($dom);
-
-         $catalogHtmlLink = $xpath->query("//li[@id='root']")->item(0);
-         $catalogHtml = $dom->loadHTML($catalogHtmlLink);
-         $xpath = new DOMXPath($dom);*/
-
-        curl_close($ch);
-
-        return $matches[0];
     }
 }
