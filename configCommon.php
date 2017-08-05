@@ -12,3 +12,6 @@ define('ERROR_LOG_FILE', __DIR__ . '/logs/error.log');
 $VENDOR_CODE_OFFSET = array(7, 3, 8, 1, 4, 7, 2, 6, 9, 6);
 
 define('PAGES_LIMIT', 999999);
+
+// in seconds
+define('SLEEP_BEFORE_PUT_PRODUCT', 2);

@@ -138,7 +138,7 @@ if (!empty($_POST['cid'])) {
             }
 
             $products[] = array_map_recursive('trim', $prod);
-            sleep(3);
+            sleep(SLEEP_BEFORE_PUT_PRODUCT);
             putProduct($prod, $urlRoot, $cid, $pricePercent, $newItems, $oldItems, $wrongItems);
         }
 
