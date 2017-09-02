@@ -221,7 +221,7 @@ $catalog = $dr->getCatalogJs();
                                              readonly="readonly"></label><br>
         <label>CID (размещение):<br><input type="text" name="cid" style="width:100%;background-color:#EEE"
                                            readonly="readonly"></label><br><br>
-        <label><input type="checkbox" id="parse_brands_check">Парсить бренды</label><br>
+        <label><input type="checkbox" id="parse_brands_check" name="parse_brands">Парсить бренды</label><br>
         <label><span id="parse_brands_label"></span><br><input type="text" name="url"
                                                                style="width:100%"></label><br><br>
         <label>Проценты к цене (отрицательное значение - минус проценты):<br><input type="text" name="percent"
@@ -254,24 +254,30 @@ $catalog = $dr->getCatalogJs();
                 $("input[name=cid]").val(cid[1]);
             });
 
-        $("#parse_brands_check").click(function () {
+        $("#parse_brands_check").click(function (e) {
+            e.preventDefault();
             setBrandsAttrs();
+            return false;
         });
+
+        if ($.cookie('use_brands_page') == 'yes') {
+            $("#parse_brands_check").prop("checked", true);
+        } else {
+            $("#parse_brands_check").prop("checked", false);
+        }
+        setBrandsAttrs();
     });
 
     function setBrandsAttrs() {
-        var cookieOptions = {expires: 7, path: '/'};
+        var cookieOptions = {expires: 70, path: '/'};
         if ($("#parse_brands_check").prop("checked")) {
             $("#parse_brands_label").text('Url донора (со списком брендов):');
-            $.cookie('use_brands_page', true, cookieOptions);
+            $.cookie('use_brands_page', 'yes', cookieOptions);
         } else {
             $("#parse_brands_label").text('Url донора (первая страница):');
-            $.cookie('use_brands_page', false, cookieOptions);
+            $.cookie('use_brands_page', 'no', cookieOptions);
         }
     }
-
-    $("#parse_brands_check").prop("checked", $.cookie('use_brands_page'));
-    setBrandsAttrs();
 
     var prepCatCount = 0;
     function prepCat(elem) {
