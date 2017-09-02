@@ -192,6 +192,7 @@ $catalog = $dr->getCatalogJs();
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/1.12.1/jquery.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jstree/3.2.1/jstree.min.js"></script>
+    <script src="/jquery.cookie.js"></script>
 
     <style>
         .JsTreeGoodsIndex {
@@ -204,7 +205,7 @@ $catalog = $dr->getCatalogJs();
 <body>
 
 <?php if (!empty($resultString)): ?>
-<?php echo $resultString ?><br><br>
+    <?php echo $resultString ?><br><br>
 <?php endif; ?>
 
 <div id="categories" style="width:550px;float:left;font-size: 13px;overflow-x: auto">
@@ -220,7 +221,9 @@ $catalog = $dr->getCatalogJs();
                                              readonly="readonly"></label><br>
         <label>CID (размещение):<br><input type="text" name="cid" style="width:100%;background-color:#EEE"
                                            readonly="readonly"></label><br><br>
-        <label>Url донора (первая страница):<br><input type="text" name="url" style="width:100%"></label><br><br>
+        <label><input type="checkbox" id="parse_brands_check">Парсить бренды</label><br>
+        <label><span id="parse_brands_label"></span><br><input type="text" name="url"
+                                                               style="width:100%"></label><br><br>
         <label>Проценты к цене (отрицательное значение - минус проценты):<br><input type="text" name="percent"
                                                                                     style="width:100%"
                                                                                     value="-3"></label><br><br>
@@ -241,7 +244,7 @@ $catalog = $dr->getCatalogJs();
         });
 
         $('#positions_cid')
-            // listen for event
+        // listen for event
             .on('changed.jstree', function (e, data) {
                 var text = data.instance.get_node(data.selected[0]).text;
                 var catName = text.match(/^(.+), id:/);
@@ -249,8 +252,26 @@ $catalog = $dr->getCatalogJs();
                 var modCatName = catName[1].replace(/<i.+i>/, '');
                 $("input[name=cat_name]").val(modCatName);
                 $("input[name=cid]").val(cid[1]);
-            })
+            });
+
+        $("#parse_brands_check").click(function () {
+            setBrandsAttrs();
+        });
     });
+
+    function setBrandsAttrs() {
+        var cookieOptions = {expires: 7, path: '/'};
+        if ($("#parse_brands_check").prop("checked")) {
+            $("#parse_brands_label").text('Url донора (со списком брендов):');
+            $.cookie('use_brands_page', true, cookieOptions);
+        } else {
+            $("#parse_brands_label").text('Url донора (первая страница):');
+            $.cookie('use_brands_page', false, cookieOptions);
+        }
+    }
+
+    $("#parse_brands_check").prop("checked", $.cookie('use_brands_page'));
+    setBrandsAttrs();
 
     var prepCatCount = 0;
     function prepCat(elem) {
