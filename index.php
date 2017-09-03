@@ -24,8 +24,22 @@ if (!empty($_POST['cid'])) {
         //bx-filter-input-checkbox
         //div.bx-filter-parameters-box:nth-child(3) > div:nth-child(3) > div:nth-child(1)
         //html.bx-core.bx-no-touch.bx-no-retina.bx-firefox body div#main div#content div div div.container.catalog_list_page div.row div.col-lg-3.col-md-3.col-sm-14.col-xs-14.catalog_left_collumn div.bx-sidebar-block div.slide_block div.slide_block_content div.bx-filter div.bx-filter-section form.smartfilter div.bx-filter-parameters-box.bx-active div.bx-filter-block div.bx-filter-parameters-box-container
+        //$items = $xpath->query("//div[@class='bx-filter-parameters-box-title']/span[@class='bx-filter-parameters-box-hint'][contains(text(),'Бренд')]");
+        //$xpath->query("//div[@class='bx-filter-parameters-box-title']/span[@class='bx-filter-parameters-box-hint'][contains(text(),'Бренд')]/parent::div/following::div[@class='bx-filter-block'][1]//span[@class='bx-filter-input-checkbox']")
+        $rootXPath = "//div[@class='bx-filter-parameters-box-title']/span[@class='bx-filter-parameters-box-hint'][contains(text(),'Бренд')]/parent::div/following::div[@class='bx-filter-block'][1]//span[@class='bx-filter-input-checkbox']";
+        if ($brandsRoot = $xpath->query($rootXPath)) {
+            foreach ($brandsRoot as $brand) {
+                $imgElem = $xpath->query("./span[@class='bx-filter-param-text']/text()", $brand)->item(0)->textContent;
+                $imgElem = trim($imgElem);
+            }
+        }
+
+        /*$nameXPath = $rootXPath . "/span[@class='bx-filter-param-text']/text()";
+        $items = $xpath->query($nameXPath);
+        print_r($items);
+        exit;*/
     } else {
-        parseBrand($_POST['url'], $_POST['cid'], $_POST['percent'], $_POST['cat_name'], $_POST['email']);
+        //parseBrand($_POST['url'], $_POST['cid'], $_POST['percent'], $_POST['cat_name'], $_POST['email']);
     }
 }
 
