@@ -553,10 +553,12 @@ class DataReader
 
         // TODO: Теперь надо переименовать (такая особенность системы)
 
+        $newElementCid = 'cid_' . $resultArr['object']['id'];
+
         $params = array(
             'method' => 'rename',
             'request_type' => 'store_catalog',
-            'id' => 'cid_' . $resultArr['object']['id'],
+            'id' => $newElementCid,
             'title' => $name,
             'version' => $resultArr['version'],
             'ajax_q' => 1,
@@ -587,5 +589,7 @@ class DataReader
         $this->searchVersion = $resultArr['version'];
 
         curl_close($ch);
+
+        return $newElementCid;
     }
 }
