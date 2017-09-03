@@ -448,7 +448,7 @@ class DataReader
         return $vars . "\n" . $matches[0];
     }
 
-    public function getBrandSublist($cid)
+    public function getSublist($cid)
     {
         $cid = trim($cid);
         //$url = 'http://ventfabrika.su/admin/store#,' . $cid;
@@ -481,7 +481,7 @@ class DataReader
 
         $resultArr = json_decode($result, true);
         if (!$resultArr) {
-            throw new Exception('Неверный Json: ' . $result);
+            throw new Exception('Неверный Json (getSublist): ' . $result);
         }
 
         if (empty($resultArr['data'])) {
@@ -504,5 +504,88 @@ class DataReader
         }
 
         return $brandsRet;
+    }
+
+    /**
+     * Создать подэлемент.
+     *
+     * @param string $cid cid элемента, под которым надо создать
+     * @param string $name название создаваемого элемента
+     * @throws Exception
+     */
+    public function createSubelement($cid, $name)
+    {
+        $cid = trim($cid);
+        $url = 'http://ventfabrika.su/admin/store_catalog';
+
+        $ch = curl_init();
+
+        $params = array(
+            'method' => 'create',
+            'request_type' => 'store_catalog',
+            'type' => 'inside',
+            //'title' => $name,
+            'ref_id' => $cid,
+            'version' => $this->searchVersion,
+            'ajax_q' => 1,
+        );
+
+        $this->setCommonCurlOpt($ch);
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, $params);
+        curl_setopt($ch, CURLOPT_URL, $url);
+
+        $result = curl_exec($ch);
+
+        if (!$result) {
+            $info = $this->getCurlErrorInfo($ch);
+            throw new Exception("Can't create item (createSubelement). Info:\n$info\n");
+        }
+
+        $resultArr = json_decode($result, true);
+        if (!$resultArr) {
+            throw new Exception('Неверный Json (createSubelement): ' . $result);
+        }
+
+        if (empty($resultArr['status']) || $resultArr['status'] != 'ok') {
+            throw new Exception('Ошибка при создании объекта (createSubelement): ' . $result);
+        }
+
+        // TODO: Теперь надо переименовать (такая особенность системы)
+
+        $params = array(
+            'method' => 'rename',
+            'request_type' => 'store_catalog',
+            'id' => 'cid_' . $resultArr['object']['id'],
+            'title' => $name,
+            'version' => $resultArr['version'],
+            'ajax_q' => 1,
+        );
+
+        $this->setCommonCurlOpt($ch);
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, $params);
+        curl_setopt($ch, CURLOPT_URL, $url);
+
+        $result = curl_exec($ch);
+
+        if (!$result) {
+            $info = $this->getCurlErrorInfo($ch);
+            throw new Exception("Can't rename item (createSubelement). Info:\n$info\n");
+        }
+
+        $resultArr = json_decode($result, true);
+        if (!$resultArr) {
+            throw new Exception('Неверный Json при rename (createSubelement): ' . $result);
+        }
+
+        if (empty($resultArr['status']) || $resultArr['status'] != 'ok'
+            || empty($resultArr['version'])) {
+            throw new Exception('Ошибка при переименовании объекта (createSubelement): ' . $result);
+        }
+
+        $this->searchVersion = $resultArr['version'];
+
+        curl_close($ch);
     }
 }

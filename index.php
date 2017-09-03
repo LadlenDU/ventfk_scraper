@@ -17,7 +17,7 @@ try {
 
             $dr = new DataReader();
             $dr->login();
-            $brandList = $dr->getBrandSublist($_POST['cid']);
+            $brandList = $dr->getSublist($_POST['cid']);
 
             $url = trim($_POST['url']);
             $dom = new DOMDocument;
@@ -30,7 +30,7 @@ try {
                     $imgElem = $xpath->query("./span[@class='bx-filter-param-text']/text()", $brand)->item(0)->textContent;
                     $imgElem = trim($imgElem);
                     if (!in_array($imgElem, $brandList)) {
-
+                        $dr->createSubelement($_POST['cid'], $imgElem);
                     }
                 }
             }
