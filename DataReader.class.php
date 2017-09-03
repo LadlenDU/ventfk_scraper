@@ -474,7 +474,7 @@ class DataReader
 
         if (!$result) {
             $info = $this->getCurlErrorInfo($ch);
-            throw new Exception("Can't find item (getBrandSublist). Info:\n$info\n");
+            throw new Exception("Can't find item (getSublist). Info:\n$info\n");
         }
 
         curl_close($ch);
@@ -495,9 +495,17 @@ class DataReader
 
         $brandsRet = [];
 
-        if ($brands = $xpath->query("//ul[@class='nested_categories']/li/a[2]/text()")) {
+        //$brands = $xpath->query("//ul[@class='nested_categories']/li/a[2]/text()");
+        $brands = $xpath->query("//ul[@class='nested_categories']/li/a[2]");
+        if ($brands) {
             foreach ($brands as $b) {
-                $brandsRet[] = trim($b->textContent);
+                $onclick = $b->getAttribute('onclick');
+                preg_match('/(cid_.*)\s/U', $onclick, $matches);
+                $key = $matches[1];
+                if (!$key) {
+                    throw new Exception('Не могу получить ключ. Cid: ' . $cid . '; result: ' . $result);
+                }
+                $brandsRet[$key] = trim($b->textContent);
             }
         } else {
             throw new Exception('Ошибка поисков брендов. Cid: ' . $cid . '; result: ' . $result);
@@ -582,7 +590,8 @@ class DataReader
         }
 
         if (empty($resultArr['status']) || $resultArr['status'] != 'ok'
-            || empty($resultArr['version'])) {
+            || empty($resultArr['version'])
+        ) {
             throw new Exception('Ошибка при переименовании объекта (createSubelement): ' . $result);
         }
 

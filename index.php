@@ -26,22 +26,27 @@ try {
             $xpath = new DOMXPath($dom);
             $rootXPath = "//div[@class='bx-filter-parameters-box-title']/span[@class='bx-filter-parameters-box-hint'][contains(text(),'Бренд')]/parent::div/following::div[@class='bx-filter-block'][1]//span[@class='bx-filter-input-checkbox']";
             if ($brandsRoot = $xpath->query($rootXPath)) {
+                //$count = 0;
                 foreach ($brandsRoot as $brand) {
                     $imgElem = $xpath->query("./span[@class='bx-filter-param-text']/text()", $brand)->item(0)->textContent;
                     $imgElem = trim($imgElem);
-                    if (!in_array($imgElem, $brandList)) {
-                        $dr->createSubelement($_POST['cid'], $imgElem);
+                    if ($key = array_search($imgElem, $brandList)) {
+                        $elementCid = $key;
+                    } else {
+                        $elementCid = $dr->createSubelement($_POST['cid'], $imgElem);
+                        //sleep(1);
                     }
+                    parseBrand($_POST['url'], $elementCid, $_POST['percent'], $_POST['cat_name'], $_POST['email']);
                 }
+            } else {
+                throw new Exception("Ошибка поиска брендов. Url: " . $url);
             }
 
-            /*$nameXPath = $rootXPath . "/span[@class='bx-filter-param-text']/text()";
-            $items = $xpath->query($nameXPath);
-            print_r($items);
-            exit;*/
         } else {
-            //parseBrand($_POST['url'], $_POST['cid'], $_POST['percent'], $_POST['cat_name'], $_POST['email']);
+            parseBrand($_POST['url'], $_POST['cid'], $_POST['percent'], $_POST['cat_name'], $_POST['email']);
         }
+
+        exit;
     }
 
     $dr = new DataReader();
