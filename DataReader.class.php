@@ -447,4 +447,62 @@ class DataReader
 
         return $vars . "\n" . $matches[0];
     }
+
+    public function getBrandSublist($cid)
+    {
+        $cid = trim($cid);
+        //$url = 'http://ventfabrika.su/admin/store#,' . $cid;
+        $url = 'http://ventfabrika.su/admin/store_catalog';
+
+        $ch = curl_init();
+
+        $params = array(
+            'method' => 'cat-data',
+            'request_type' => 'store_catalog',
+            'page' => 0,
+            'id' => $cid,
+            'version' => $this->searchVersion,
+            'ajax_q' => 1,
+        );
+
+        $this->setCommonCurlOpt($ch);
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, $params);
+        curl_setopt($ch, CURLOPT_URL, $url);
+
+        $result = curl_exec($ch);
+
+        if (!$result) {
+            $info = $this->getCurlErrorInfo($ch);
+            throw new Exception("Can't find item (getBrandSublist). Info:\n$info\n");
+        }
+
+        curl_close($ch);
+
+        $resultArr = json_decode($result, true);
+        if (!$resultArr) {
+            throw new Exception('Неверный Json: ' . $result);
+        }
+
+        if (empty($resultArr['data'])) {
+            throw new Exception('Отсутствует необходимый элемент "data" в Json: ' . $result);
+        }
+
+        $dom = new DOMDocument;
+        $dom->preserveWhiteSpace = false;
+        $load = $dom->loadHTML($resultArr['data']);
+        $xpath = new DOMXPath($dom);
+
+        $brandsRet = [];
+
+        if ($brands = $xpath->query("//ul[@class='nested_categories']/li/a[2]/text()")) {
+            foreach ($brands as $b) {
+                $brandsRet[] = trim($b->textContent);
+            }
+        } else {
+            throw new Exception('Ошибка поисков брендов. Cid: ' . $cid . '; result: ' . $result);
+        }
+
+        return $brandsRet;
+    }
 }

@@ -2,50 +2,62 @@
 
 header('Content-Type: text/html; charset=utf-8');
 
-require_once('configCommon.php');
-require_once('config.php');
+try {
+    require_once('configCommon.php');
+    require_once('config.php');
 
-require_once('DataReader.class.php');
-require_once('QueryCreator.class.php');
+    require_once('DataReader.class.php');
+    require_once('QueryCreator.class.php');
 
-require_once('functions.php');
+    require_once('functions.php');
 
-if (!empty($_POST['cid'])) {
+    if (!empty($_POST['cid'])) {
 
-    if (!empty($_POST['parse_brands'])) {
-        $url = trim($_POST['url']);
-        $dom = new DOMDocument;
-        $dom->preserveWhiteSpace = false;
-        $load = $dom->loadHTMLFile($url);
-        $xpath = new DOMXPath($dom);
-        //div.bx-filter-parameters-box-title span.bx-filter-parameters-box-hint
-        //Бренд >
-        //div.bx-filter-block
-        //bx-filter-input-checkbox
-        //div.bx-filter-parameters-box:nth-child(3) > div:nth-child(3) > div:nth-child(1)
-        //html.bx-core.bx-no-touch.bx-no-retina.bx-firefox body div#main div#content div div div.container.catalog_list_page div.row div.col-lg-3.col-md-3.col-sm-14.col-xs-14.catalog_left_collumn div.bx-sidebar-block div.slide_block div.slide_block_content div.bx-filter div.bx-filter-section form.smartfilter div.bx-filter-parameters-box.bx-active div.bx-filter-block div.bx-filter-parameters-box-container
-        //$items = $xpath->query("//div[@class='bx-filter-parameters-box-title']/span[@class='bx-filter-parameters-box-hint'][contains(text(),'Бренд')]");
-        //$xpath->query("//div[@class='bx-filter-parameters-box-title']/span[@class='bx-filter-parameters-box-hint'][contains(text(),'Бренд')]/parent::div/following::div[@class='bx-filter-block'][1]//span[@class='bx-filter-input-checkbox']")
-        $rootXPath = "//div[@class='bx-filter-parameters-box-title']/span[@class='bx-filter-parameters-box-hint'][contains(text(),'Бренд')]/parent::div/following::div[@class='bx-filter-block'][1]//span[@class='bx-filter-input-checkbox']";
-        if ($brandsRoot = $xpath->query($rootXPath)) {
-            foreach ($brandsRoot as $brand) {
-                $imgElem = $xpath->query("./span[@class='bx-filter-param-text']/text()", $brand)->item(0)->textContent;
-                $imgElem = trim($imgElem);
+        if (!empty($_POST['parse_brands'])) {
+
+            $dr = new DataReader();
+            $dr->login();
+            $brandList = $dr->getBrandSublist($_POST['cid']);
+
+            $url = trim($_POST['url']);
+            $dom = new DOMDocument;
+            $dom->preserveWhiteSpace = false;
+            $load = $dom->loadHTMLFile($url);
+            $xpath = new DOMXPath($dom);
+            $rootXPath = "//div[@class='bx-filter-parameters-box-title']/span[@class='bx-filter-parameters-box-hint'][contains(text(),'Бренд')]/parent::div/following::div[@class='bx-filter-block'][1]//span[@class='bx-filter-input-checkbox']";
+            if ($brandsRoot = $xpath->query($rootXPath)) {
+                foreach ($brandsRoot as $brand) {
+                    $imgElem = $xpath->query("./span[@class='bx-filter-param-text']/text()", $brand)->item(0)->textContent;
+                    $imgElem = trim($imgElem);
+                    if (!in_array($imgElem, $brandList)) {
+
+                    }
+                }
             }
+
+            /*$nameXPath = $rootXPath . "/span[@class='bx-filter-param-text']/text()";
+            $items = $xpath->query($nameXPath);
+            print_r($items);
+            exit;*/
+        } else {
+            //parseBrand($_POST['url'], $_POST['cid'], $_POST['percent'], $_POST['cat_name'], $_POST['email']);
         }
-
-        /*$nameXPath = $rootXPath . "/span[@class='bx-filter-param-text']/text()";
-        $items = $xpath->query($nameXPath);
-        print_r($items);
-        exit;*/
-    } else {
-        //parseBrand($_POST['url'], $_POST['cid'], $_POST['percent'], $_POST['cat_name'], $_POST['email']);
     }
-}
 
-$dr = new DataReader();
-$dr->login();
-$catalog = $dr->getCatalogJs();
+    $dr = new DataReader();
+    $dr->login();
+    $catalog = $dr->getCatalogJs();
+
+} catch (Exception $e) {
+    $msg = date(DATE_RFC822) . " >\nLine: " . $e->getLine() . "\nMessage:\n" . $e->getMessage() . "\n\n";
+    error_log($msg, 3, ERROR_LOG_FILE);
+    mail(EMAIL, 'Ошибка в парсере', $msg);
+    echo '<pre>';
+    echo 'Произошла ошибка:<br>';
+    echo $msg;
+    echo '</pre>';
+    return false;
+}
 
 ?>
 <!DOCTYPE html>
