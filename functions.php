@@ -229,10 +229,13 @@ function getResponseLocationHeader($url)
 {
     $location = '';
 
-    $ch = curl_init($url);
+    $ch = curl_init();
+    curl_setopt($ch, CURLOPT_URL, $url);
     curl_setopt($ch, CURLOPT_HEADER, 1);
+    curl_setopt($ch, CURLOPT_POST, false);
     curl_setopt($ch, CURLOPT_MAXREDIRS, 10);
     curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
     if (curl_exec($ch)) {
         //echo curl_getinfo($ch, CURLINFO_HTTP_CODE);
         $cInfo = curl_getinfo($ch);

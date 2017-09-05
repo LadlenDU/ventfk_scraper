@@ -526,37 +526,53 @@ class DataReader
         $cid = trim($cid);
         $url = 'http://ventfabrika.su/admin/store_catalog';
 
-        $ch = curl_init();
+        $cycleCount = 0;
+        for (; ;) {
+            $ch = curl_init();
 
-        $params = array(
-            'method' => 'create',
-            'request_type' => 'store_catalog',
-            'type' => 'inside',
-            //'title' => $name,
-            'ref_id' => $cid,
-            'version' => $this->searchVersion,
-            'ajax_q' => 1,
-        );
+            $params = array(
+                'method' => 'create',
+                'request_type' => 'store_catalog',
+                'type' => 'inside',
+                //'title' => $name,
+                'ref_id' => $cid,
+                'version' => $this->searchVersion,
+                'ajax_q' => 1,
+            );
 
-        $this->setCommonCurlOpt($ch);
-        curl_setopt($ch, CURLOPT_POST, true);
-        curl_setopt($ch, CURLOPT_POSTFIELDS, $params);
-        curl_setopt($ch, CURLOPT_URL, $url);
+            $this->setCommonCurlOpt($ch);
+            curl_setopt($ch, CURLOPT_POST, true);
+            curl_setopt($ch, CURLOPT_POSTFIELDS, $params);
+            curl_setopt($ch, CURLOPT_URL, $url);
 
-        $result = curl_exec($ch);
+            $result = curl_exec($ch);
 
-        if (!$result) {
-            $info = $this->getCurlErrorInfo($ch);
-            throw new Exception("Can't create item (createSubelement). Info:\n$info\n");
-        }
+            if (!$result) {
+                $info = $this->getCurlErrorInfo($ch);
+                throw new Exception("Can't create item (createSubelement). Info:\n$info\n");
+            }
 
-        $resultArr = json_decode($result, true);
-        if (!$resultArr) {
-            throw new Exception('Неверный Json (createSubelement): ' . $result);
-        }
+            $resultArr = json_decode($result, true);
+            if (!$resultArr) {
+                throw new Exception('Неверный Json (createSubelement): ' . $result);
+            }
 
-        if (empty($resultArr['status']) || $resultArr['status'] != 'ok') {
-            throw new Exception('Ошибка при создании объекта (createSubelement): ' . $result);
+            if (isset($resultArr['status']) && $resultArr['status'] == 'reload') {
+                if (!empty($resultArr['version'])) {
+                    $this->searchVersion = $resultArr['version'];
+                } else {
+                    $this->login();
+                }
+                if ($cycleCount++ < 3) {
+                    continue;
+                }
+            }
+
+            if (empty($resultArr['status']) || $resultArr['status'] != 'ok') {
+                throw new Exception('Ошибка при создании объекта (createSubelement): ' . $result);
+            }
+
+            break;
         }
 
         // TODO: Теперь надо переименовать (такая особенность системы)
