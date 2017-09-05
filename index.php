@@ -30,6 +30,9 @@ try {
                 foreach ($brandsRoot as $brand) {
                     $imgElem = $xpath->query("./span[@class='bx-filter-param-text']/text()", $brand)->item(0)->textContent;
                     $imgElem = trim($imgElem);
+                    if ($imgElem == 'Lessar') {
+                        break;
+                    }
                     if ($key = array_search($imgElem, $brandList)) {
                         $elementCid = $key;
                     } else {
@@ -122,9 +125,9 @@ try {
         <br><br>
 
         <select name="search_type">
-            <option value="search_in_folder_to_put">Искать только в разделе где идет размещение</option>
-            <option value="search_everywhere">Искать везде (во всех разделах)</option>
-            <option value="no_search">Не искать</option>
+            <option value="search_in_folder_to_put">Искать совпадения только в разделе где идет размещение</option>
+            <option value="search_everywhere">Искать совпадения везде (во всех разделах)</option>
+            <option value="no_search">Не искать совпадения</option>
         </select>
 
         <br><br>

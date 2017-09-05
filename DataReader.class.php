@@ -563,6 +563,7 @@ class DataReader
                     $this->login();
                 }
                 if ($cycleCount++ < 3) {
+                    curl_close($ch);
                     continue;
                 }
             }
