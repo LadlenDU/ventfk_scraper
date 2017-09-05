@@ -26,13 +26,9 @@ try {
             $xpath = new DOMXPath($dom);
             $rootXPath = "//div[@class='bx-filter-parameters-box-title']/span[@class='bx-filter-parameters-box-hint'][contains(text(),'Бренд')]/parent::div/following::div[@class='bx-filter-block'][1]//span[@class='bx-filter-input-checkbox']";
             if ($brandsRoot = $xpath->query($rootXPath)) {
-                //$count = 0;
                 foreach ($brandsRoot as $brand) {
                     $imgElem = $xpath->query("./span[@class='bx-filter-param-text']/text()", $brand)->item(0)->textContent;
                     $imgElem = trim($imgElem);
-                    if ($imgElem == 'Lessar') {
-                        break;
-                    }
                     if ($key = array_search($imgElem, $brandList)) {
                         $elementCid = $key;
                     } else {
@@ -51,7 +47,12 @@ try {
                         throw new Exception("Response Location не найден. Url: " . $tmpUrl);
                     }
                     //$tmpUrl = 'https://iclim.ru/catalog/ventilyatsiya/ventilyatory/kanalnye_ventilyatory_dlya_kruglykh_kanalov/?CALL_AJAX=Y&filter=arCatalogFilter_20_841453994:Y&sort=shows&order=&PAGEN_1=1';
-                    parseBrand($elementUrl, $elementCid, $_POST['percent'], $_POST['cat_name'], $_POST['email']);
+                    parseBrand($elementUrl,
+                        $elementCid,
+                        $_POST['percent'],
+                        "'$_POST[cat_name]' => '$imgElem'",
+                        $_POST['email']
+                    );
                 }
             } else {
                 throw new Exception("Ошибка поиска брендов. Url: " . $url);
