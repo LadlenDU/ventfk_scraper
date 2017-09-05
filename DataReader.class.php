@@ -525,54 +525,43 @@ class DataReader
         $cid = trim($cid);
         $url = 'http://ventfabrika.su/admin/store_catalog';
 
-        $cycleCount = 0;
-        for (; ;) {
-            $ch = curl_init();
+        $ch = curl_init();
 
-            $params = array(
-                'method' => 'create',
-                'request_type' => 'store_catalog',
-                'type' => 'inside',
-                //'title' => $name,
-                'ref_id' => $cid,
-                'version' => $this->searchVersion,
-                'ajax_q' => 1,
-            );
+        $params = array(
+            'method' => 'create',
+            'request_type' => 'store_catalog',
+            'type' => 'inside',
+            //'title' => $name,
+            'ref_id' => $cid,
+            'version' => $this->searchVersion,
+            'ajax_q' => 1,
+        );
 
-            $this->setCommonCurlOpt($ch);
-            curl_setopt($ch, CURLOPT_POST, true);
-            curl_setopt($ch, CURLOPT_POSTFIELDS, $params);
-            curl_setopt($ch, CURLOPT_URL, $url);
+        $this->setCommonCurlOpt($ch);
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, $params);
+        curl_setopt($ch, CURLOPT_URL, $url);
 
-            $result = curl_exec($ch);
+        $result = curl_exec($ch);
 
-            if (!$result) {
-                $info = $this->getCurlErrorInfo($ch);
-                throw new Exception("Can't create item (createSubelement). Info:\n$info\n");
-            }
+        if (!$result) {
+            $info = $this->getCurlErrorInfo($ch);
+            throw new Exception("Can't create item (createSubelement). Info:\n$info\n");
+        }
 
-            $resultArr = json_decode($result, true);
-            if (!$resultArr) {
-                throw new Exception('Неверный Json (createSubelement): ' . $result);
-            }
+        $resultArr = json_decode($result, true);
+        if (!$resultArr) {
+            throw new Exception('Неверный Json (createSubelement): ' . $result);
+        }
 
-            if (isset($resultArr['status']) && $resultArr['status'] == 'reload') {
-                if (!empty($resultArr['version'])) {
-                    $this->searchVersion = $resultArr['version'];
-                } else {
-                    $this->login();
-                }
-                if ($cycleCount++ < 3) {
-                    curl_close($ch);
-                    continue;
-                }
-            }
+        if (empty($resultArr['status']) || ($resultArr['status'] != 'ok' && $resultArr['status'] != 'reload')) {
+            throw new Exception('Ошибка при создании объекта (createSubelement): ' . $result);
+        }
 
-            if (empty($resultArr['status']) || $resultArr['status'] != 'ok') {
-                throw new Exception('Ошибка при создании объекта (createSubelement): ' . $result);
-            }
-
-            break;
+        if (!empty($resultArr['version'])) {
+            $this->searchVersion = $resultArr['version'];
+        } else {
+            $this->login();
         }
 
         // TODO: Теперь надо переименовать (такая особенность системы)
@@ -584,7 +573,8 @@ class DataReader
             'request_type' => 'store_catalog',
             'id' => $newElementCid,
             'title' => $name,
-            'version' => $resultArr['version'],
+            //'version' => $resultArr['version'],
+            'version' => $this->searchVersion,
             'ajax_q' => 1,
         );
 
@@ -605,10 +595,14 @@ class DataReader
             throw new Exception('Неверный Json при rename (createSubelement): ' . $result);
         }
 
-        if (empty($resultArr['status']) || $resultArr['status'] != 'ok'
-            || empty($resultArr['version'])
-        ) {
+        if (empty($resultArr['status']) || ($resultArr['status'] != 'ok' && $resultArr['status'] != 'reload')) {
             throw new Exception('Ошибка при переименовании объекта (createSubelement): ' . $result);
+        }
+
+        if (!empty($resultArr['version'])) {
+            $this->searchVersion = $resultArr['version'];
+        } else {
+            $this->login();
         }
 
         $this->searchVersion = $resultArr['version'];
