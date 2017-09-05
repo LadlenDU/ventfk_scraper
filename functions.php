@@ -218,3 +218,27 @@ function parseBrand($url, $cid, $percent, $cat_name, $email)
     mail($email, "Произведен парсинг для категории $cat_name", $msg);
     //exit;
 }
+
+/**
+ * Вернуть парамерт location из ответов заголовков.
+ *
+ * @param $url
+ * @return string
+ */
+function getResponseLocationHeader($url)
+{
+    $location = '';
+
+    $ch = curl_init($url);
+    curl_setopt($ch, CURLOPT_HEADER, 1);
+    curl_setopt($ch, CURLOPT_MAXREDIRS, 10);
+    curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+    if (curl_exec($ch)) {
+        //echo curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $cInfo = curl_getinfo($ch);
+        $location = $cInfo['url'];
+    }
+    curl_close($ch);
+
+    return $location;
+}

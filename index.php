@@ -34,9 +34,21 @@ try {
                         $elementCid = $key;
                     } else {
                         $elementCid = $dr->createSubelement($_POST['cid'], $imgElem);
-                        //sleep(1);
+                        sleep(1);
                     }
-                    parseBrand($_POST['url'], $elementCid, $_POST['percent'], $_POST['cat_name'], $_POST['email']);
+
+                    $dataElem = $xpath->query("./input", $brand)->item(0);
+                    $id = $dataElem->getAttribute('id');
+                    $value = $dataElem->getAttribute('value');
+                    $tmpUrl = rtrim($url, '/') . '/?CALL_AJAX=Y&filter='
+                        . urlencode($id) . ':' . urlencode($value) . '&sort=shows&order=&PAGEN_1=1';
+
+                    $elementUrl = getResponseLocationHeader($tmpUrl);
+                    if (!$elementUrl) {
+                        throw new Exception("Response Location не найден. Url: " . $tmpUrl);
+                    }
+                    //$tmpUrl = 'https://iclim.ru/catalog/ventilyatsiya/ventilyatory/kanalnye_ventilyatory_dlya_kruglykh_kanalov/?CALL_AJAX=Y&filter=arCatalogFilter_20_841453994:Y&sort=shows&order=&PAGEN_1=1';
+                    parseBrand($elementUrl, $elementCid, $_POST['percent'], $_POST['cat_name'], $_POST['email']);
                 }
             } else {
                 throw new Exception("Ошибка поиска брендов. Url: " . $url);
