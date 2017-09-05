@@ -117,7 +117,18 @@ try {
                                            readonly="readonly"></label><br><br>
         <label><input type="checkbox" id="parse_brands_check" name="parse_brands">Парсить бренды</label><br>
         <label><span id="parse_brands_label"></span><br><input type="text" name="url"
-                                                               style="width:100%"></label><br><br>
+                                                               style="width:100%"></label>
+
+        <br><br>
+
+        <select name="search_type">
+            <option value="search_in_folder_to_put">Искать только в разделе где идет размещение</option>
+            <option value="search_everywhere">Искать везде (во всех разделах)</option>
+            <option value="no_search">Не искать</option>
+        </select>
+
+        <br><br>
+
         <label>Проценты к цене (отрицательное значение - минус проценты):<br><input type="text" name="percent"
                                                                                     style="width:100%"
                                                                                     value="-3"></label><br><br>

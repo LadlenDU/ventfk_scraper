@@ -11,8 +11,14 @@ class QueryCreator
     protected $propKey;
     protected $propKeySub;
 
-    public function __construct($type)
+    protected $cid;
+    protected $searchType;
+
+    public function __construct($cid, $searchType = 'search_in_folder_to_put')
     {
+        $this->cid = $cid;
+        $this->searchType = $searchType;
+
         if (!self::$to) {
             self::$to = new DataReader();
             self::$to->login();
@@ -25,7 +31,7 @@ class QueryCreator
 
         $this->params['continue'] = 1;
         $this->params['form[ajax_images][]'] = '';
-        $this->params['form[goods_cat_id]'] = ',' . $type;
+        $this->params['form[goods_cat_id]'] = ',' . $cid;
         $this->params['form[goods_desc_large]'] = '';
         $this->params['form[goods_desc_short]'] = '';
         $this->params['form[goods_description]'] = '';
@@ -163,8 +169,13 @@ class QueryCreator
 
     public function postNewItem()
     {
-        if (self::$to->ifItemExists($this->params['form[goods_name]'])) {
-            return 'already_exists';
+        if ($this->searchType != 'no_search') {
+
+            $searchSection = ($this->searchType == 'search_in_folder_to_put') ? $this->cid : 'all_goods';
+
+            if (self::$to->ifItemExists($this->params['form[goods_name]'], $searchSection)) {
+                return 'already_exists';
+            }
         }
         self::$to->postNewItem($this->params);
         return 'item_set';

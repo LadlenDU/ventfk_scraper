@@ -357,7 +357,7 @@ class DataReader
         curl_close($ch);
     }
 
-    public function ifItemExists($name)
+    public function ifItemExists($name, $cid = 'all_goods')
     {
         $cycleCount = 0;
         for (; ;) {
@@ -370,8 +370,7 @@ class DataReader
                 'per_page' => 5000,
                 'page' => 0,
                 'search_q' => $name,
-                'id' => 'all_goods',
-                //'version' => 'ddd187',
+                'id' => $cid,
                 'version' => $this->searchVersion,
                 'ajax_q' => 1,
             );

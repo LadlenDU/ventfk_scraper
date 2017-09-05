@@ -13,7 +13,7 @@ function putProduct($prod, $urlRoot, $cid, $priceCorrectPercent, &$newItems, &$o
 {
     try {
 
-        $qc = new QueryCreator($cid);
+        $qc = new QueryCreator($cid, $_POST['search_type']);
         $qc->setImage($urlRoot . $prod['img_src']);
         $qc->setName($prod['name']);
         $qc->setShortDescription($prod['short_description']);
