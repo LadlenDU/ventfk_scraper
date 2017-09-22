@@ -6,7 +6,7 @@ class DataReader
 
     public function __construct()
     {
-        $this->cookie = __DIR__ . '/storeland.cookie.txt';
+        $this->cookie = __DIR__ . '/cookies/storeland.cookie.' . uniqid(rand(), true) . '.txt';
     }
 
     protected function setCommonCurlOpt($ch)
@@ -157,19 +157,20 @@ class DataReader
         return array('sessId' => $sessId, 'sessHash' => $sessHash);
     }
 
-    public function login()
+    public function login($params = false)
     {
         unlink($this->cookie);  // не оптимально но так проще
 
-        $hash = $this->loadLoginPage();
+        $hash = $this->loadLoginPage($params);
 
+        //$sessParams = $this->loginToLoginPage($hash, $params);    // возможно, понадобится $params здесь
         $sessParams = $this->loginToLoginPage($hash);
 
         $this->loadVentfabricaLoginPage($sessParams['sessId'], $sessParams['sessHash']);
-        $this->findSearchVersion();
+        $this->findSearchVersion($params);
     }
 
-    protected function findSearchVersion()
+    protected function findSearchVersion($params = false)
     {
         $ch = curl_init();
 
@@ -189,7 +190,14 @@ class DataReader
         preg_match("/,version: '(.+)'/", $result, $matches);
         $this->searchVersion = $matches[1];
         if (!$this->searchVersion) {
-            throw new Exception("Can't find search version. Page:\n$result\n");
+            if ($params) {
+                throw new Exception("Can't find search version. Page:\n$result\n");
+            } else {
+                // try to relogin
+                if ($foundParams = $this->getRedirectPageParameters($result)) {
+                    $this->login($foundParams);
+                }
+            }
         }
     }
 
@@ -220,28 +228,37 @@ class DataReader
             'form[images_ids][0]' => $imageId,
         );
 
-        $ch = curl_init();
+        for ($i = 0; $i < 2; $i++) {
 
-        $this->setCommonCurlOpt($ch);
-        curl_setopt($ch, CURLOPT_POST, true);
-        curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
-        curl_setopt($ch, CURLOPT_URL, "http://ventfabrika.su/admin/store_goods_img_upload");
+            $ch = curl_init();
 
-        $result = curl_exec($ch);
+            $this->setCommonCurlOpt($ch);
+            curl_setopt($ch, CURLOPT_POST, true);
+            curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
+            curl_setopt($ch, CURLOPT_URL, "http://ventfabrika.su/admin/store_goods_img_upload");
 
-        unset($tmpName);
+            $result = curl_exec($ch);
 
-        if (!$result) {
-            $info = $this->getCurlErrorInfo($ch);
-            throw new Exception("Can't upload image. Info:\n$info\n");
-        }
+            unset($tmpName);
 
-        curl_close($ch);
+            if (!$result) {
+                $info = $this->getCurlErrorInfo($ch);
+                throw new Exception("Can't upload image. Info:\n$info\n");
+            }
 
-        $pageDecoded = json_decode($result, true);
+            curl_close($ch);
 
-        if (!$pageDecoded['result'][$imageId]['image_id']) {
-            throw new Exception("Can't get image_id from\n>>>>>\n$result\n<<<<<\n");
+            $pageDecoded = json_decode($result, true);
+
+            if ($pageDecoded['result'][$imageId]['image_id']) {
+                break;
+            } else {
+                if ($pageDecoded['status'] == 'reload') {
+                    $this->login();
+                } else {
+                    throw new Exception("Can't get image_id from\n>>>>>\n$result\n<<<<<\n");
+                }
+            }
         }
 
         return $pageDecoded['result'][$imageId]['image_id'];
@@ -258,24 +275,32 @@ class DataReader
 
     public function getCharacteristics()
     {
-        $ch = curl_init();
+        for ($i = 0; $i < 2; $i++) {
+            $ch = curl_init();
 
-        $this->setCommonCurlOpt($ch);
-        curl_setopt($ch, CURLOPT_POST, false);
-        curl_setopt($ch, CURLOPT_URL, "http://ventfabrika.su/json/attr?" . self::genRndKey());
+            $this->setCommonCurlOpt($ch);
+            curl_setopt($ch, CURLOPT_POST, false);
+            curl_setopt($ch, CURLOPT_URL, "http://ventfabrika.su/json/attr?" . self::genRndKey());
 
-        $result = curl_exec($ch);
+            $result = curl_exec($ch);
 
-        if (!$result) {
-            $info = $this->getCurlErrorInfo($ch);
-            throw new Exception("Can't get add goods page. Info:\n$info\n");
+            if (!$result) {
+                $info = $this->getCurlErrorInfo($ch);
+                throw new Exception("Can't get add goods page. Info:\n$info\n");
+            }
+
+            curl_close($ch);
+
+            $result = substr($result, 21);
+
+            $dRes = json_decode($result, true);
+            if ($dRes) {
+                break;
+            } else {
+                $this->login();
+            }
         }
 
-        curl_close($ch);
-
-        $result = substr($result, 21);
-
-        $dRes = json_decode($result, true);
         if (!$dRes) {
             throw new Exception("Can't get characteristics from\n>>>>>\n$result\n<<<<<\n");
         }
