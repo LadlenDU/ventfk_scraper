@@ -3,7 +3,7 @@
 error_reporting(E_ALL ^ E_WARNING ^ E_DEPRECATED);
 ini_set('display_errors', 1);
 
-set_time_limit(3600 * 10);
+set_time_limit(3600 * 12);
 
 define('EMAIL', 'TwilightTower@mail.ru');
 define('RESULT_LOG_FILE', __DIR__ . '/logs/log.log');
@@ -14,4 +14,4 @@ $VENDOR_CODE_OFFSET = array(7, 3, 8, 1, 4, 7, 2, 6, 9, 6);
 define('PAGES_LIMIT', 999999);
 
 // in seconds
-define('SLEEP_BEFORE_PUT_PRODUCT', 2);
+define('SLEEP_BEFORE_PUT_PRODUCT', 3);
