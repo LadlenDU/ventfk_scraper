@@ -337,7 +337,7 @@ class DataReader
         return $chars;
     }
 
-    public function newItemPage()
+    public function newItemPage($nextTry = false)
     {
         $ch = curl_init();
 
@@ -357,7 +357,14 @@ class DataReader
         preg_match('/<input type="hidden" name="hash" value="(.+)"/', $result, $matches);
 
         if (!$matches[1]) {
-            throw new Exception("Can't get hash (newItemPage) from\n>>>>>\n$result\n<<<<<\n");
+            if ($nextTry) {
+                throw new Exception("Can't get hash (newItemPage) from\n>>>>>\n$result\n<<<<<\n");
+            } else {
+                if ($foundParams = $this->getRedirectPageParameters($result)) {
+                    $this->login($foundParams);
+                    $this->newItemPage(true);
+                }
+            }
         }
 
         return $matches[1];
