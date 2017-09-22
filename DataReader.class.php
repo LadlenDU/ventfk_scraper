@@ -61,7 +61,7 @@ class DataReader
 
         $this->setCommonCurlOpt($ch);
         curl_setopt($ch, CURLOPT_POST, false);
-        curl_setopt($ch, CURLOPT_URL, "https://storeland.ru/user/login" . ($params ? $params : ''));
+        curl_setopt($ch, CURLOPT_URL, "https://storeland.ru/user/login/" . ($params ? $params : ''));
 
         $result = curl_exec($ch);
 
