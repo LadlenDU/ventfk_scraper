@@ -42,6 +42,11 @@ class DataReader
      */
     protected function getRedirectPageParameters($result)
     {
+        sleep(1);   // на всякий случай
+        if (strpos($result, '503 Service Temporarily Unavailable') !== false) {
+            sleep(10);
+            return '503';
+        }
         preg_match('#<script>window.location="(.+)";</script>#', $result, $matches);
         if (empty($matches[1])) {
             throw new Exception("Can't get redirect address from\n>>>>>\n$result\n<<<<<\n");
@@ -74,7 +79,11 @@ class DataReader
                 throw new Exception("Can't get hash (loadLoginPage) from\n>>>>>\n$result\n<<<<<\n");
             } else {
                 if ($foundParams = $this->getRedirectPageParameters($result)) {
-                    return $this->loadLoginPage($foundParams);
+                    if ($foundParams == '503') {
+                        $this->loadLoginPage();
+                    } else {
+                        return $this->loadLoginPage($foundParams);
+                    }
                 }
             }
         }
@@ -141,7 +150,11 @@ class DataReader
                 throw new Exception("Can't get sess_id from\n>>>>>\n$result\n<<<<<\n");
             } else {
                 if ($foundParams = $this->getRedirectPageParameters($result)) {
-                    return $this->loginToLoginPage($hash, $foundParams);
+                    if ($foundParams == '503') {
+                        $this->loginToLoginPage($hash);
+                    } else {
+                        return $this->loginToLoginPage($hash, $foundParams);
+                    }
                 }
             }
         }
@@ -195,7 +208,11 @@ class DataReader
             } else {
                 // try to relogin
                 if ($foundParams = $this->getRedirectPageParameters($result)) {
-                    $this->login($foundParams);
+                    if ($foundParams == '503') {
+                        $this->findSearchVersion();
+                    } else {
+                        $this->login($foundParams);
+                    }
                 }
             }
         }
@@ -361,8 +378,12 @@ class DataReader
                 throw new Exception("Can't get hash (newItemPage) from\n>>>>>\n$result\n<<<<<\n");
             } else {
                 if ($foundParams = $this->getRedirectPageParameters($result)) {
-                    $this->login($foundParams);
-                    $this->newItemPage(true);
+                    if ($foundParams == '503') {
+                        $this->newItemPage();
+                    } else {
+                        $this->login($foundParams);
+                        $this->newItemPage(true);
+                    }
                 }
             }
         }
@@ -587,8 +608,12 @@ class DataReader
                 throw new Exception('Неверный Json (createSubelement): ' . $result);
             } else {
                 if ($foundParams = $this->getRedirectPageParameters($result)) {
-                    $this->login($foundParams);
-                    $this->createSubelement($cid, $name, true);
+                    if ($foundParams == '503') {
+                        $this->createSubelement($cid, $name);
+                    } else {
+                        $this->login($foundParams);
+                        $this->createSubelement($cid, $name, true);
+                    }
                 }
             }
         }
