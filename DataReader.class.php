@@ -71,7 +71,7 @@ class DataReader
 
         if (empty($matches[1])) {
             if ($params) {
-                throw new Exception("Can't get hash from\n>>>>>\n$result\n<<<<<\n");
+                throw new Exception("Can't get hash (loadLoginPage) from\n>>>>>\n$result\n<<<<<\n");
             } else {
                 if ($foundParams = $this->getRedirectPageParameters($result)) {
                     return $this->loadLoginPage($foundParams);
@@ -357,7 +357,7 @@ class DataReader
         preg_match('/<input type="hidden" name="hash" value="(.+)"/', $result, $matches);
 
         if (!$matches[1]) {
-            throw new Exception("Can't get hash from\n>>>>>\n$result\n<<<<<\n");
+            throw new Exception("Can't get hash (newItemPage) from\n>>>>>\n$result\n<<<<<\n");
         }
 
         return $matches[1];
@@ -545,7 +545,7 @@ class DataReader
      * @param string $name название создаваемого элемента
      * @throws Exception
      */
-    public function createSubelement($cid, $name)
+    public function createSubelement($cid, $name, $nextTry = false)
     {
         $cid = trim($cid);
         $url = 'http://ventfabrika.su/admin/store_catalog';
@@ -576,7 +576,14 @@ class DataReader
 
         $resultArr = json_decode($result, true);
         if (!$resultArr) {
-            throw new Exception('Неверный Json (createSubelement): ' . $result);
+            if ($nextTry) {
+                throw new Exception('Неверный Json (createSubelement): ' . $result);
+            } else {
+                if ($foundParams = $this->getRedirectPageParameters($result)) {
+                    $this->login($foundParams);
+                    $this->createSubelement($cid, $name, true);
+                }
+            }
         }
 
         if (empty($resultArr['status']) || ($resultArr['status'] != 'ok' && $resultArr['status'] != 'reload')) {
