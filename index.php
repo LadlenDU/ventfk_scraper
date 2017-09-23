@@ -65,7 +65,7 @@ try {
     <?php echo $resultString ?><br><br>
 <?php endif; ?>
 
-<div id="categories" style="width:550px;float:left;font-size: 13px;overflow-x: auto">
+<div id="categories" style="width:550px;float:left;font-size: 13px;overflow-x: auto;margin-bottom: 5em;">
     Размещение:<br>
 
     <div id="positions_cid"></div>
