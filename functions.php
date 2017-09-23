@@ -412,7 +412,8 @@ function parseBrandRusklimat($url, $cid, $percent, $cat_name, $email)
 
         //.catalog_pageNav .navstring ul li.bx-pag-next a (get href)
         //$nextPage = $xpath->query("//div[@id='catalog_list']/div[@class='bx_catalog_item']/div[@class='bx_catalog_item_container']");
-        $nextPage = $xpath->query("//div[@class='catalog_pageNav']/div[@class='navstring']/ul/li[@class='bx-pag-next']/a");
+        //$nextPage = $xpath->query("//div[@class='catalog_pageNav']/div[@class='navstring']/ul/li[@class='bx-pag-next']/a");
+        $nextPage = $xpath->query("//div[@id='catalogList']/div[@class='paginator']/a[@id='navigation_1_next_page']");
         if ($nextPage->length) {
             if ($newUrl = $nextPage->item(0)->getAttribute('href')) {
                 $url = $urlRoot . $newUrl;
