@@ -279,12 +279,14 @@ function parseBrandRusklimat($url, $cid, $percent, $cat_name, $email)
         $load = $dom->loadHTMLFile($url);
         $xpath = new DOMXPath($dom);
 
-        $items = $xpath->query("//div[@id='catalog_list']/div[@class='bx_catalog_item']/div[@class='bx_catalog_item_container']");
+        //$items = $xpath->query("//div[@id='catalog_list']/div[@class='bx_catalog_item']/div[@class='bx_catalog_item_container']");
+        $items = $xpath->query("//div[@class='results-line']/div");
 
         foreach ($items as $itmKey => $itm) {
             $prod = array();
 
-            $imgElem = $xpath->query("./a[@class='bx_catalog_item_images']", $itm)->item(0);
+            //$imgElem = $xpath->query("./a[@class='bx_catalog_item_images']", $itm)->item(0);
+            $imgElem = $xpath->query(".//a[@class='pic']", $itm)->item(0);
             if (!$imgElem) {
                 $wrongItems[] = array('url' => $url, 'key' => $itmKey, 'stage' => 1);
                 continue;
@@ -294,20 +296,37 @@ function parseBrandRusklimat($url, $cid, $percent, $cat_name, $email)
             preg_match("/url\s*\(\s*['\"]\s*(.*)\s*['\"]\s*\)/U", $imgStyle, $matches);
             $prod['img_src'] = $matches[1];
 
-            $prod['href_full_description'] = $imgElem->getAttribute('href');
+            $prod['href_full_description'] = trim($imgElem->getAttribute('href'));
 
-            $tmp = $xpath->query("./div[@class='discribe']/div[@class='bx_catalog_item_title']/a", $itm)->item(0);
+            //$tmp = $xpath->query("./div[@class='discribe']/div[@class='bx_catalog_item_title']/a", $itm)->item(0);
+            $tmp = $xpath->query(".//div[@class='ttl']/a", $itm)->item(0);
             if (!$tmp) {
                 $tmp[] = array('url' => $url, 'key' => $itmKey, 'stage' => 2);
                 continue;
             }
-            $prod['name'] = $tmp->nodeValue;
-            $tmp = $xpath->query("./div[@class='discribe']/div[@class='prev_txt']", $itm)->item(0);
+            $prod['name'] = trim($tmp->nodeValue);
+
+            //$tmp = $xpath->query("./div[@class='discribe']/div[@class='prev_txt']", $itm)->item(0);
+            $tmp = $xpath->query(".//div[@class='cln-chars']", $itm)->item(0);
             if (!$tmp) {
                 $tmp[] = array('url' => $url, 'key' => $itmKey, 'stage' => 3);
                 continue;
             }
-            $prod['short_description'] = $tmp->nodeValue;
+            #$prod['short_description'] = trim($tmp->nodeValue);
+            $prod['short_description'] = '';
+            $shortDescription = trim($tmp->nodeValue);
+            if ($shortDescriptionList = preg_split("/\\r\\n|\\r|\\n/", $shortDescription)) {
+                foreach ($shortDescriptionList as $key => $txtLine) {
+                    $prod['short_description'] .= $txtLine;
+                    if ($key % 2) {
+                        $prod['short_description'] = rtrim($prod['short_description'], ':') . ': ';
+                    } else {
+                        $prod['short_description'] .= '<br>';
+                    }
+                }
+                // remove '<br>'
+                $prod['short_description'] = substr($prod['short_description'], 0, -4);
+            }
 
             // Переход к подробностям
             $fullUrl = $urlRoot . $prod['href_full_description'];
