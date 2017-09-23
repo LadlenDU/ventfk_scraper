@@ -340,13 +340,13 @@ function parseBrandRusklimat($url, $cid, $percent, $cat_name, $email)
             $xpathFull = new DOMXPath($domFull);
 
             //$descrFullElem = $xpathFull->query("//div[@id='desc_txt_tab']/div/div[@class='bx_item_description']")->item(0);
-            $descrFullElem = trim($xpathFull->query("//div[@id='tabDesc']")->item(0));
+            $descrFullElem = $xpathFull->query("//div[@id='tabDesc']")->item(0);
             //$featureFullElem = $xpathFull->query("//div[@id='prop_txt_tab']/div/div[@class='item_info_section']")->item(0);
-            $featureFullElem = trim($xpathFull->query("//div[@id='tabChar']/table[contains(@class,'tbl-char')]")->item(0));
+            $featureFullElem = $xpathFull->query("//div[@id='tabChar']/table[contains(@class,'tbl-char')]")->item(0);
             //$priceFullElem = $xpathFull->query("//div[@class='item_current_price']")->item(0);
-            $priceFullElem = trim($xpathFull->query("//div[@class='prices']/div[@class='price']")->item(0));
+            $priceFullElem = $xpathFull->query("//div[@class='prices']/div[@class='price']")->item(0);
             //$vendorCodeFullElem = $xpathFull->query("//div[@class='detail_articul']/span")->item(0);
-            $vendorCodeFullElem = trim($xpathFull->query("//div[@class='article']/span")->item(0));
+            $vendorCodeFullElem = $xpathFull->query("//div[@class='article']/span")->item(0);
 
             if (!$descrFullElem && !$featureFullElem) {
                 $wrongItems[] = array('url' => $fullUrl, 'key' => $itmKey, 'stage' => 4);
@@ -370,8 +370,13 @@ function parseBrandRusklimat($url, $cid, $percent, $cat_name, $email)
 
             $prod['features'] = array();
 
-            $trs = $xpathFeature->query("//div[@class='item_info_section']/table/tr");
+            //$trs = $xpathFeature->query("//div[@class='item_info_section']/table/tr");
+            $trs = $xpathFeature->query("//table[contains(@class,'tbl-char')]/tr[not(@class='sp')]");
             foreach ($trs as $tr) {
+
+                if (!$xpathFeature->query(".//td[not(@colspan='2')]", $tr)->item(0)) {
+                    continue;
+                }
 
                 $feature = array();
 
