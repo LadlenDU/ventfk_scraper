@@ -319,13 +319,13 @@ function parseBrandRusklimat($url, $cid, $percent, $cat_name, $email)
                 foreach ($shortDescriptionList as $key => $txtLine) {
                     $prod['short_description'] .= trim($txtLine);
                     if ($key % 2) {
-                        $prod['short_description'] .= '<br>';
+                        $prod['short_description'] .= "\n";
                     } else {
                         $prod['short_description'] = rtrim($prod['short_description'], ':') . ': ';
                     }
                 }
-                // remove '<br>'
-                $prod['short_description'] = substr($prod['short_description'], 0, -4);
+                //// remove '<br>'
+                //$prod['short_description'] = substr($prod['short_description'], 0, -4);
             }
 
             // Переход к подробностям
