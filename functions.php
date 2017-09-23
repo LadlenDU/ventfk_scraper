@@ -371,12 +371,13 @@ function parseBrandRusklimat($url, $cid, $percent, $cat_name, $email)
             $prod['features'] = array();
 
             //$trs = $xpathFeature->query("//div[@class='item_info_section']/table/tr");
-            $trs = $xpathFeature->query("//table[contains(@class,'tbl-char')]/tr[not(@class='sp')]");
+            //$trs = $xpathFeature->query("//table[contains(@class,'tbl-char')]/tr[not(@class='sp')]");
+            $trs = $xpathFeature->query("//table[contains(@class,'tbl-char')]/tr[not(@class='sp')]/td[not(@colspan='2')]/parent::tr");
             foreach ($trs as $tr) {
 
-                if (!$xpathFeature->query(".//td[not(@colspan='2')]", $tr)->item(0)) {
+                /*if (!$xpathFeature->query(".//td[not(@colspan='2')]", $tr)->item(0)) {
                     continue;
-                }
+                }*/
 
                 $feature = array();
 
