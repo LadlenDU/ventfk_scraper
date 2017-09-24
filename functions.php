@@ -101,7 +101,7 @@ function parseBrand($url, $cid, $percent, $cat_name, $email)
 
             $imgStyle = $imgElem->getAttribute('style');
             preg_match("/url\s*\(\s*['\"]\s*(.*)\s*['\"]\s*\)/U", $imgStyle, $matches);
-            $prod['img_src'] = trim($matches[1]);
+            $prod['img_src'] = empty($matches[1]) ? false : trim($matches[1]);
             if (!$prod['img_src']) {
                 $noImageItems[] = array('url' => $prod['href_full_description'], 'key' => $itmKey, 'stage' => 'no_image');
             }
@@ -306,7 +306,7 @@ function parseBrandRusklimat($url, $cid, $percent, $cat_name, $email)
 
             $imgStyle = $imgElem->getAttribute('style');
             preg_match("/url\s*\(\s*['\"]\s*(.*)\s*['\"]\s*\)/U", $imgStyle, $matches);
-            $prod['img_src'] = trim($matches[1]);
+            $prod['img_src'] = empty($matches[1]) ? false : trim($matches[1]);
             if (!$prod['img_src']) {
                 $noImageItems[] = array('url' => $prod['href_full_description'], 'key' => $itmKey, 'stage' => 'no_image');
             }
