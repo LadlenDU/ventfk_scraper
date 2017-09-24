@@ -224,7 +224,8 @@ function parseBrand($url, $cid, $percent, $cat_name, $email)
     error_log($msg, 3, RESULT_LOG_FILE);
 
     mail($email, "Произведен парсинг для категории $cat_name", $msg);
-    //exit;
+
+    return $resultString;
 }
 
 /**
@@ -456,6 +457,7 @@ function parseBrandRusklimat($url, $cid, $percent, $cat_name, $email)
     error_log($msg, 3, RESULT_LOG_FILE);
 
     mail($email, "Произведен парсинг для категории $cat_name", $msg);
-    //exit;
+
+    return $resultString;
 }
 

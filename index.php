@@ -2,6 +2,8 @@
 
 header('Content-Type: text/html; charset=utf-8');
 
+$resultString = '';
+
 try {
     require_once('configCommon.php');
     require_once('config.php');
@@ -21,7 +23,6 @@ try {
             die('wrong site');
         }
 
-        exit;
     }
 
     $dr = new DataReader();

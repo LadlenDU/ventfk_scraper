@@ -42,7 +42,7 @@ if (!empty($_POST['parse_brands'])) {
                 throw new Exception("Response Location не найден. Url: " . $tmpUrl);
             }*/
             //$tmpUrl = 'https://iclim.ru/catalog/ventilyatsiya/ventilyatory/kanalnye_ventilyatory_dlya_kruglykh_kanalov/?CALL_AJAX=Y&filter=arCatalogFilter_20_841453994:Y&sort=shows&order=&PAGEN_1=1';
-            parseBrandRusklimat($elementUrl,
+            $resultString .= parseBrandRusklimat($elementUrl,
                 $elementCid,
                 $_POST['percent'],
                 "'$_POST[cat_name]' => '$imgElem'",
@@ -54,5 +54,5 @@ if (!empty($_POST['parse_brands'])) {
     }
 
 } else {
-    parseBrandRusklimat($_POST['url'], $_POST['cid'], $_POST['percent'], $_POST['cat_name'], $_POST['email']);
+    $resultString .= parseBrandRusklimat($_POST['url'], $_POST['cid'], $_POST['percent'], $_POST['cat_name'], $_POST['email']);
 }
