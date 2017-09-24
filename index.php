@@ -62,9 +62,17 @@ try {
 </head>
 <body>
 
-<?php if (!empty($resultString)): ?>
-    <?php echo $resultString ?><br><br>
-<?php endif; ?>
+<?php
+if ($resultString) {
+    echo $resultString;
+} else {
+    if (!empty($_POST['cid'])) {
+        echo 'Парсинг завершен, но без результата. Проверьте, пожалуйста, входные данные и страницу парсинга. Данные запроса:<br><pre>';
+        echo print_r($_POST, true);
+        echo '</pre><br>';
+    }
+}
+?>
 
 <div id="categories" style="width:550px;float:left;font-size: 13px;overflow-x: auto;margin-bottom: 5em;">
     Размещение:<br>
