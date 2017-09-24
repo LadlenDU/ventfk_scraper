@@ -14,7 +14,9 @@ function putProduct($prod, $urlRoot, $cid, $priceCorrectPercent, &$newItems, &$o
     try {
 
         $qc = new QueryCreator($cid, $_POST['search_type']);
-        $qc->setImage($urlRoot . $prod['img_src']);
+        if ($prod['img_src']) {
+            $qc->setImage($urlRoot . $prod['img_src']);
+        }
         $qc->setName($prod['name']);
         $qc->setShortDescription($prod['short_description']);
         $qc->setFullDescription($prod['full_description']);
@@ -69,6 +71,7 @@ function parseBrand($url, $cid, $percent, $cat_name, $email)
     $oldItems = array();
     $newItems = array();
     $wrongItems = array();
+    $noImageItems = array();
 
 //    header('Content-Type: text/html; charset=utf-8');
 
@@ -96,7 +99,10 @@ function parseBrand($url, $cid, $percent, $cat_name, $email)
 
             $imgStyle = $imgElem->getAttribute('style');
             preg_match("/url\s*\(\s*['\"]\s*(.*)\s*['\"]\s*\)/U", $imgStyle, $matches);
-            $prod['img_src'] = $matches[1];
+            $prod['img_src'] = trim($matches[1]);
+            if (!$prod['img_src']) {
+                $noImageItems[] = array('url' => $url, 'key' => $itmKey, 'stage' => 'no_image');
+            }
 
             $prod['href_full_description'] = $imgElem->getAttribute('href');
 
@@ -208,7 +214,9 @@ function parseBrand($url, $cid, $percent, $cat_name, $email)
         . "Элементы, проигнорированные как уже существующие:\n"
         . print_r($oldItems, true) . "\n\n"
         . "Пропущенные по причине ошибок элементы:\n"
-        . print_r($wrongItems, true);
+        . print_r($wrongItems, true) . "\n\n"
+        . "Элементы, у которых не обнаружено изображение:\n"
+        . print_r($noImageItems, true);
 
     $resultString = "<pre>\n$str\n</pre>";
 
@@ -265,6 +273,7 @@ function parseBrandRusklimat($url, $cid, $percent, $cat_name, $email)
     $oldItems = array();
     $newItems = array();
     $wrongItems = array();
+    $noImageItems = array();
 
 //    header('Content-Type: text/html; charset=utf-8');
 
@@ -294,7 +303,10 @@ function parseBrandRusklimat($url, $cid, $percent, $cat_name, $email)
 
             $imgStyle = $imgElem->getAttribute('style');
             preg_match("/url\s*\(\s*['\"]\s*(.*)\s*['\"]\s*\)/U", $imgStyle, $matches);
-            $prod['img_src'] = $matches[1];
+            $prod['img_src'] = trim($matches[1]);
+            if (!$prod['img_src']) {
+                $noImageItems[] = array('url' => $url, 'key' => $itmKey, 'stage' => 'no_image');
+            }
 
             $prod['href_full_description'] = trim($imgElem->getAttribute('href'));
 
@@ -434,7 +446,9 @@ function parseBrandRusklimat($url, $cid, $percent, $cat_name, $email)
         . "Элементы, проигнорированные как уже существующие:\n"
         . print_r($oldItems, true) . "\n\n"
         . "Пропущенные по причине ошибок элементы:\n"
-        . print_r($wrongItems, true);
+        . print_r($wrongItems, true) . "\n\n"
+        . "Элементы, у которых не обнаружено изображение:\n"
+        . print_r($noImageItems, true);
 
     $resultString = "<pre>\n$str\n</pre>";
 
