@@ -97,14 +97,14 @@ function parseBrand($url, $cid, $percent, $cat_name, $email)
                 continue;
             }
 
+            $prod['href_full_description'] = $imgElem->getAttribute('href');
+
             $imgStyle = $imgElem->getAttribute('style');
             preg_match("/url\s*\(\s*['\"]\s*(.*)\s*['\"]\s*\)/U", $imgStyle, $matches);
             $prod['img_src'] = trim($matches[1]);
             if (!$prod['img_src']) {
-                $noImageItems[] = array('url' => $url, 'key' => $itmKey, 'stage' => 'no_image');
+                $noImageItems[] = array('url' => $prod['href_full_description'], 'key' => $itmKey, 'stage' => 'no_image');
             }
-
-            $prod['href_full_description'] = $imgElem->getAttribute('href');
 
             $tmp = $xpath->query("./div[@class='discribe']/div[@class='bx_catalog_item_title']/a", $itm)->item(0);
             if (!$tmp) {
@@ -302,14 +302,14 @@ function parseBrandRusklimat($url, $cid, $percent, $cat_name, $email)
                 continue;
             }
 
+            $prod['href_full_description'] = trim($imgElem->getAttribute('href'));
+
             $imgStyle = $imgElem->getAttribute('style');
             preg_match("/url\s*\(\s*['\"]\s*(.*)\s*['\"]\s*\)/U", $imgStyle, $matches);
             $prod['img_src'] = trim($matches[1]);
             if (!$prod['img_src']) {
-                $noImageItems[] = array('url' => $url, 'key' => $itmKey, 'stage' => 'no_image');
+                $noImageItems[] = array('url' => $prod['href_full_description'], 'key' => $itmKey, 'stage' => 'no_image');
             }
-
-            $prod['href_full_description'] = trim($imgElem->getAttribute('href'));
 
             //$tmp = $xpath->query("./div[@class='discribe']/div[@class='bx_catalog_item_title']/a", $itm)->item(0);
             $tmp = $xpath->query(".//div[@class='ttl']/a", $itm)->item(0);
