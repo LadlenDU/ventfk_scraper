@@ -175,7 +175,8 @@ if ($resultString) {
     var prepCatCount = 0;
     function prepCat(elem) {
         elem.text = elem.data + ", id:" + elem.attributes.id;
-        if (prepCatCount++ < 3) {
+        //if (prepCatCount++ < 3) {
+        if (elem.data == 'Решения' || elem.data == 'Каталог товаров на сайте' || elem.data == 'Насосы водяные') {
             elem.state = {opened: true};
         }
         if (elem.children) {
