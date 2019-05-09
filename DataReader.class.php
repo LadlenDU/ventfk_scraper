@@ -237,8 +237,8 @@ class DataReader
 
         $fName = pathinfo($url, PATHINFO_BASENAME);
 
-        //$cImage = new CURLFile($tmpName, mime_content_type($tmpName), $fName);
-        $data = array('form[ajax_images][]' => ('@' . $tmpName), //$cImage,
+        $cImage = new CURLFile($tmpName, mime_content_type($tmpName), $fName);
+        $data = array('form[ajax_images][]' => $cImage, //('@' . $tmpName),
             'ajax_q' => 1,
             'form[goods_id]' => 'NaN',
             //'form[images_ids][0]' => 'img_699860198617'
@@ -545,7 +545,7 @@ class DataReader
         $load = $dom->loadHTML($resultArr['data']);
         $xpath = new DOMXPath($dom);
 
-        $brandsRet = [];
+        $brandsRet = array();
 
         //$brands = $xpath->query("//ul[@class='nested_categories']/li/a[2]/text()");
         $brands = $xpath->query("//ul[@class='nested_categories']/li/a[2]");
